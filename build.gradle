@@ -29,7 +29,11 @@ repositories {
 	maven{
 		url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 	}
+	maven { url 'https://jitpack.io' }
+
 }
+
+
 
 configurations {
 	shade
@@ -45,13 +49,14 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
 
-
+	shade("org.openjfx:javafx-media:20.0.2:win")
 	shade(compose.desktop.currentOs) // 如果你用了 compose 插件
 	shade(compose.ui)
 	shade(compose.foundation)
 	shade(compose.material)
 	shade(compose.runtime)
 	shade("org.jetbrains.compose.ui:ui-desktop")
+	shade 'com.github.javazoom:jlayer:master-SNAPSHOT'
 
 
 }

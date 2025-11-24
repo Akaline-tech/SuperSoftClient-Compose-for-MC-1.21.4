@@ -3,6 +3,8 @@ package com.xiamo.gui.clickGui
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.draggable
@@ -17,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Text
+import androidx.compose.material.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -43,6 +46,7 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
     var windowX by mutableStateOf(x.toFloat())
     var windowY by mutableStateOf(y.toFloat())
     public var isDragging = false
+    var isHover = false
     private var dragOffsetX = 0f
     private var dragOffsetY = 0f
     val categoryTitleFont = 45.sp
@@ -57,10 +61,12 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
 
     @Composable
     fun renderCompose() {
+        val interfaceSource = remember { MutableInteractionSource() }
         val textMeasurer = rememberTextMeasurer()
         val density = LocalDensity.current
         val textHeight = textMeasurer.measure(category.name, textStyle).size.height
         val heightDp = with(density) { textHeight.toDp() }
+        isHover = interfaceSource.collectIsHoveredAsState().value
         height = (heightDp + 20.dp).value.toInt()
         
 
@@ -78,7 +84,9 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(heightDp + 20.dp)
-                    .shadow(5.dp, RoundedCornerShape(radius)),
+                    .shadow(5.dp, RoundedCornerShape(radius))
+                    .hoverable(interfaceSource)
+                ,
                 backgroundColor = titleBgColor,
                 shape = RoundedCornerShape(radius)
             ) {
@@ -107,17 +115,19 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
                     fontWeight = FontWeight.Light,
                     color = Color.White,
                     modifier = Modifier
+                        .clickable(onClick = {
+                            it.toggle()
+                        },interactionSource = remember { MutableInteractionSource() } ,indication = ripple(true,200.dp,Color.DarkGray))
                         .hoverable(interactionSource)
                         .fillMaxWidth()
                         .background(moduleBgColor)
                         .padding(horizontal = 8.dp)
-                        .clickable(onClick = {
-                            it.toggle()
-                        })
+
                 )
             }
         }
     }
+
 
     fun onDragged(mouseX:Int , mouseY:Int){
         if (!isDragging) return

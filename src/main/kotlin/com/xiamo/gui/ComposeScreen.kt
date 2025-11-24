@@ -1,12 +1,16 @@
 package com.xiamo.gui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asComposeCanvas
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.pointer.PointerButton
+import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerType
@@ -16,6 +20,7 @@ import androidx.compose.ui.scene.ComposeScenePointer
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import com.mojang.blaze3d.systems.RenderSystem
+import com.xiamo.module.ModuleManager
 import com.xiamo.utils.AWTUtils
 import com.xiamo.utils.GlStateUtil
 import com.xiamo.utils.glfwToAwtKeyCode
@@ -30,16 +35,19 @@ import org.jetbrains.skia.FramebufferFormat
 import org.jetbrains.skia.Surface
 import org.jetbrains.skia.SurfaceColorFormat
 import org.jetbrains.skia.SurfaceOrigin
+import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL33C
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 
 @OptIn(InternalComposeUiApi::class)
-open class ComposeScreen(text: Text) : Screen(text) {
+open class ComposeScreen(val text: Text) : Screen(text) {
 
 
 
+    var isVisible by mutableStateOf(false)
+    var allowExit  = false
     var skiaContext : DirectContext? = null
     var surface : Surface? = null
     var renderTarget : BackendRenderTarget? = null
@@ -70,6 +78,12 @@ open class ComposeScreen(text: Text) : Screen(text) {
             skiaContext!!, renderTarget!!, SurfaceOrigin.BOTTOM_LEFT,
             SurfaceColorFormat.BGRA_8888, ColorSpace.sRGB)
 
+    }
+
+    override fun removed() {
+        if (!allowExit) ModuleManager.modules.find { it.name == this.text.string }?.disable()
+
+        super.removed()
     }
 
 
@@ -119,7 +133,8 @@ open class ComposeScreen(text: Text) : Screen(text) {
         }
     }
 
-    override fun shouldPause(): Boolean {
+
+    override fun shouldCloseOnEsc(): Boolean {
         return false
     }
     private fun toComposeOffset(mouseX: Double, mouseY: Double): Offset {
@@ -144,9 +159,19 @@ open class ComposeScreen(text: Text) : Screen(text) {
             pressed = false,
             type = PointerType.Mouse
         )
+        val event = AWTUtils.MouseEvent(
+            (mouseX * currentScale).toInt(),
+            (mouseY*  currentScale).toInt(),
+            AWTUtils.getAwtMods(MinecraftClient.getInstance().window.handle),
+            0,
+            MouseEvent.MOUSE_MOVED
+        )
         composeScene?.sendPointerEvent(
             PointerEventType.Move,
-            listOf(pointer)
+            position = toComposeOffset(mouseX, mouseY),
+            type = PointerType.Mouse,
+            button = PointerButton(0),
+            nativeEvent = event
         )
         super.mouseMoved(mouseX, mouseY)
     }
@@ -161,8 +186,6 @@ open class ComposeScreen(text: Text) : Screen(text) {
             button,
             MouseEvent.MOUSE_PRESSED
         )
-
-
         val pointer = ComposeScenePointer(
             id = PointerId(0),
             position = toComposeOffset(mouseX, mouseY),
@@ -170,12 +193,7 @@ open class ComposeScreen(text: Text) : Screen(text) {
             type = PointerType.Mouse
         )
 
-        composeScene?.sendPointerEvent(
-            eventType = PointerEventType.Press,
-            pointers = listOf(pointer),
-            nativeEvent = event
-        )
-
+        composeScene?.sendPointerEvent(PointerEventType.Press,toComposeOffset(mouseX, mouseY), nativeEvent = event)
         return super.mouseClicked(mouseX, mouseY, button)
     }
 
@@ -226,7 +244,7 @@ open class ComposeScreen(text: Text) : Screen(text) {
 
         composeScene?.sendPointerEvent(
             eventType = PointerEventType.Release,
-            pointers = listOf(pointer),
+            position = toComposeOffset(mouseX, mouseY),
             nativeEvent = event
         )
 
@@ -252,6 +270,16 @@ open class ComposeScreen(text: Text) : Screen(text) {
 
     @OptIn(InternalComposeUiApi::class)
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE){
+            isVisible = false
+            ModuleManager.modules.filter { it.isComposeScreen }.forEach{
+                if (it.name == text.string) {
+                    println(it.name)
+                    it.disable()
+                }
+            }
+        }
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) allowExit = true
         val awtKey = glfwToAwtKeyCode(keyCode)
         val time = System.nanoTime() / 1_000_000
         composeScene?.sendKeyEvent(
@@ -286,6 +314,7 @@ open class ComposeScreen(text: Text) : Screen(text) {
 
     @OptIn(InternalComposeUiApi::class)
     override fun close() {
+        allowExit = true
         skiaContext?.close()
         renderTarget?.close()
         surface?.close()

@@ -6,6 +6,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateSizeAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
@@ -13,11 +14,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
@@ -33,7 +38,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.decodeToImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -43,6 +60,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.llamalad7.mixinextras.lib.antlr.runtime.atn.Transition
+import com.xiamo.SuperSoft
 import com.xiamo.gui.ComposeScreen
 import com.xiamo.module.Category
 import com.xiamo.module.ModuleManager
@@ -50,19 +68,34 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text
+import org.lwjgl.glfw.GLFW
 import java.util.concurrent.CopyOnWriteArrayList
 
-class ClickGuiScreen : ComposeScreen(Text.of("ClickGui")) {
+class ClickGuiScreen(val parentScreen : Screen? = null) : ComposeScreen(Text.of("ClickGui")) {
     val categories = CopyOnWriteArrayList<ClickGuiWindow>()
-    var isVisible by mutableStateOf(false)
 
     var width = 400
 
 
 
+
+
     @Composable
     override fun renderCompose() {
+
+        LaunchedEffect(Unit )
+        {
+            isVisible = true
+        }
+        val scale by animateSizeAsState(if (isVisible)Size(1f,1f,) else Size(0f,0f,) ,tween (durationMillis = 300),
+            finishedListener = {
+               if (!isVisible){
+                   MinecraftClient.getInstance().setScreen(parentScreen)
+               }
+            }
+            )
         if (categories.count() ==0){
             var x = 120
             val y = 200
@@ -72,26 +105,25 @@ class ClickGuiScreen : ComposeScreen(Text.of("ClickGui")) {
             }
 
         }
-       LaunchedEffect(Unit )
-       {
-           isVisible = true
-       }
 
-
-
-
-        AnimatedVisibility(isVisible,
-            enter = fadeIn() + scaleIn(tween(easing = FastOutSlowInEasing)),
-            exit = fadeOut() + scaleOut(tween (easing = FastOutSlowInEasing, durationMillis = 300)),
+        Box(modifier = Modifier.fillMaxSize()
+            .dropShadow(
+                RoundedCornerShape(32.dp),
+                Shadow(8.dp, Color(0,0,0,20))
+            )
+            .safeContentPadding()
         ){
-            Box(modifier = Modifier.fillMaxSize().animateContentSize()){
-                categories.forEach { it.renderCompose() }
-            }
+        }
 
+
+        Box(modifier = Modifier.fillMaxSize().animateContentSize().scale(scale.width,scale.height)){
+            categories.forEach { it.renderCompose() }
         }
 
 
     }
+
+
 
     override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
         categories.forEach { it.onDragged(mouseX.toInt(),mouseY.toInt()) }
@@ -100,7 +132,9 @@ class ClickGuiScreen : ComposeScreen(Text.of("ClickGui")) {
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        categories.forEach { it.onClicked(mouseX.toInt(),mouseY.toInt()) }
+        if (categories.any{it.isHover}){
+            categories.last { it.isHover }.onClicked(mouseX.toInt(),mouseY.toInt())
+        }
         return super.mouseClicked(mouseX, mouseY, button)
     }
 
@@ -109,18 +143,11 @@ class ClickGuiScreen : ComposeScreen(Text.of("ClickGui")) {
         return super.mouseReleased(mouseX, mouseY, button)
     }
 
+
     override fun close() {
-
-        isVisible = false
-        ModuleManager.modules.find { it.name == "ClickGui" }?.toggle()
+        ModuleManager.modules.find { it.name == "ClickGui" }?.enabled = false
         super.close()
-
-
-
-
     }
-
-
 
 }
 

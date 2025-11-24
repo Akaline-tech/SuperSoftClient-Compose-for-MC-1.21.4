@@ -2,6 +2,7 @@ package com.xiamo.module.modules.render
 
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.contextmenu.modifier.filterTextContextMenuComponents
 import androidx.compose.material.Card
@@ -46,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import com.xiamo.module.ComposeModule
 import com.xiamo.module.ModuleManager
 import com.xiamo.setting.StringSetting
+
 import org.jetbrains.skia.paragraph.Shadow
 
 object Hud : ComposeModule("Hud","界面") {
@@ -68,28 +72,55 @@ object Hud : ComposeModule("Hud","界面") {
             }
 
             Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxSize()) {
-                Column(horizontalAlignment = Alignment.End) {
-                    ModuleManager.modules.forEach { module ->
-                        key(module.name) {
-                            AnimatedVisibility(
-                                visible = module.enabled,
-                                enter =slideInHorizontally(initialOffsetX = {it}) + fadeIn(),
-                                exit =slideOutHorizontally(targetOffsetX = {it})+fadeOut()
-                            ) {
-                                Text(
-                                    text = module.name,
-                                    fontSize = 8.sp,
-                                    color = Color.White,
-                                    modifier = Modifier
-                                        .background(Color(255f, 255f, 255f, 0.6f), RoundedCornerShape(2.dp))
-                                        .shadow(5.dp)
-                                        .padding(horizontal = 4.dp, vertical = 2.dp),
-                                    textAlign = TextAlign.Right
-                                )
-                            }
-                        }
+                LazyColumn(horizontalAlignment = Alignment.End, modifier = Modifier.width(200.dp)){
+                    ModuleManager.modules.filter { it.enabled }.forEach {module ->
+                       item {
+                           Text(
+                               text = module.name,
+                               fontSize = 8.sp,
+                               color = Color.White,
+                               modifier = Modifier
+                                   .background(Color(255f, 255f, 255f, 0.6f), RoundedCornerShape(2.dp))
+                                   .shadow(5.dp)
+                                   .padding(horizontal = 4.dp, vertical = 2.dp)
+                                   .animateContentSize()
+                                   .animateItem()
+                               ,
+                               textAlign = TextAlign.Right
+                           )
+                       }
+
                     }
                 }
+
+
+
+//                Column(horizontalAlignment = Alignment.End) {
+//                    ModuleManager.modules.forEach { module ->
+//                        key(module.name) {
+//                            AnimatedVisibility(
+//                                visible = module.enabled,
+//                                enter =slideInHorizontally(initialOffsetX = {it}) + fadeIn(),
+//                                exit =slideOutHorizontally(targetOffsetX = {it})+fadeOut()
+//                            ) {
+//                                Text(
+//                                    text = module.name,
+//                                    fontSize = 8.sp,
+//                                    color = Color.White,
+//                                    modifier = Modifier
+//                                        .background(Color(255f, 255f, 255f, 0.6f), RoundedCornerShape(2.dp))
+//                                        .shadow(5.dp)
+//                                        .padding(horizontal = 4.dp, vertical = 2.dp)
+//                                        .animateContentSize()
+//                                    ,
+//                                    textAlign = TextAlign.Right
+//                                )
+//                            }
+//                        }
+//                    }
+//
+//
+//                }
 
 
             }

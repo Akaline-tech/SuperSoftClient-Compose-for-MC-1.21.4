@@ -2,6 +2,7 @@ package com.xiamo
 
 import com.xiamo.event.EvenManager
 import com.xiamo.module.ModuleManager
+import com.xiamo.utils.config.ConfigManager
 import net.fabricmc.api.ModInitializer
 import org.slf4j.LoggerFactory
 
@@ -15,5 +16,6 @@ object SuperSoft : ModInitializer {
 		logger.info("SuperSoft Loaded")
 		EvenManager
 		ModuleManager
+		ConfigManager
 	}
 }

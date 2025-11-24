@@ -10,6 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 
 open class Module(val name : String,val description : String,val category: Category) {
+    var isComposeScreen = false
     var enabled by  mutableStateOf(false)
     var key : Int =  -1
 
@@ -33,6 +34,7 @@ open class Module(val name : String,val description : String,val category: Categ
     }
 
     open fun toggle(){
+
         if (this.enabled){
             disable()
         }else enable()
