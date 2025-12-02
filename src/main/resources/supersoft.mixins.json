@@ -13,7 +13,10 @@
     "requireAnnotations": true
   },
   "client": [
+    "MixinClientEntity",
+    "MixinEntityRenderDispatcher",
     "MixinKey",
+    "MixinLivingEntityRenderer",
     "MixinMouse",
     "MixinTick"
   ]

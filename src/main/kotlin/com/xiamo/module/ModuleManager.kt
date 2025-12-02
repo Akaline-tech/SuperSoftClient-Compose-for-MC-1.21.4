@@ -2,7 +2,9 @@ package com.xiamo.module
 
 import com.xiamo.SuperSoft
 import com.xiamo.gui.musicPlayer.MusicPlayerScreen
+import com.xiamo.module.modules.combat.KillAura
 import com.xiamo.module.modules.misc.MusicPlayer
+import com.xiamo.module.modules.movement.Sprint
 import com.xiamo.module.modules.render.ClickGui
 import com.xiamo.module.modules.render.DynamicIsland
 import com.xiamo.module.modules.render.Hud
@@ -19,11 +21,13 @@ object ModuleManager {
 
 
     init {
+        modules.add(DynamicIsland)
         modules.add(Hud)
         modules.add(ClickGui)
         modules.add(MusicPlayer)
-        modules.add(DynamicIsland)
         modules.add(Lyric)
+        modules.add(Sprint)
+        modules.add(KillAura)
 
 
 
