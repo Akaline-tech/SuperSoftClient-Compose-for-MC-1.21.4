@@ -1,6 +1,7 @@
 package com.xiamo.mixin;
 
 
+import com.xiamo.event.PlayerMovementTickPacketSendPre;
 import com.xiamo.utils.rotation.Rotation;
 import com.xiamo.utils.rotation.RotationManager;
 import net.minecraft.client.MinecraftClient;
@@ -33,16 +34,9 @@ public class MixinClientEntity {
 
     @Inject(method = "tick",at = @At("HEAD"))
     private void onTick(CallbackInfo ci){
-//        if (RotationManager.INSTANCE.isActive().getValue() && RotationManager.INSTANCE.getTargetRotation() != null) {
-//            ClientPlayerEntity player = (ClientPlayerEntity)(Object)this;
-//
-//            float spoofYaw = RotationManager.INSTANCE.getTargetRotation().getYaw();
-//            float spoofPitch = RotationManager.INSTANCE.getTargetRotation().getPitch();
-//
-//            // 让 Minecraft 认为你每 tick 都转头了
-//            player.prevYaw = spoofYaw - 0.0001f;
-//            player.prevPitch = spoofPitch - 0.0001f;
-//        }
+        if (RotationManager.INSTANCE.isActive().getValue() && RotationManager.INSTANCE.getTargetRotation() != null) {
+           RotationManager.INSTANCE.soomthRotationToPacketRotation(RotationManager.INSTANCE.getTargetRotation(), 180f);
+        }
 
     }
 
@@ -66,17 +60,39 @@ public class MixinClientEntity {
 //
 //    }
 
+
+    @Inject(method = "sendMovementPackets",at = @At("HEAD"), cancellable = true)
+    private void onSendMovementPackets(CallbackInfo ci){
+        if (RotationManager.INSTANCE.isActive().getValue() && RotationManager.INSTANCE.getTargetRotation() != null) {
+            RotationManager.INSTANCE.soomthRotationToPacketRotation(RotationManager.INSTANCE.getTargetRotation(), 180f);
+        }
+
+        if (this.client.player != null) {
+            PlayerMovementTickPacketSendPre event = new PlayerMovementTickPacketSendPre(
+                    this.client.player.getX(),
+                    this.client.player.getY(),
+                    this.client.player.getZ(),
+                    this.client.player.isOnGround()
+            );
+            event.broadcast();
+
+            if (event.isCancelled()) {
+                ci.cancel();
+            }
+        }
+    }
+
     @Redirect(method = "sendMovementPackets",at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V"))
     private void sendMovementPackets(ClientPlayNetworkHandler instance, Packet<?> packet){
         if (packet instanceof PlayerMoveC2SPacket && RotationManager.INSTANCE.getTargetRotation() != null && RotationManager.INSTANCE.isActive().getValue()){
-            Rotation targetRotation = RotationManager.INSTANCE.getPacketRotation();
+            Rotation targetRotation = RotationManager.INSTANCE.getTargetRotation();
             PlayerMoveC2SPacket movePacket = (PlayerMoveC2SPacket) packet;
             Packet<?> newPacket;
             float yaw = RotationManager.INSTANCE.getTargetRotation().getYaw();
             float pitch = RotationManager.INSTANCE.getTargetRotation().getYaw();
             if (targetRotation != null){
-                yaw = targetRotation.getYaw();
-                pitch = targetRotation.getPitch();
+                yaw = RotationManager.INSTANCE.getServerYaw();
+                pitch = RotationManager.INSTANCE.getServerPitch();
             }
             double x = movePacket.getX(this.client.player.getX());
             double y = movePacket.getY(this.client.player.getY());
@@ -84,10 +100,16 @@ public class MixinClientEntity {
             if (movePacket.changesLook()){
                 newPacket = new PlayerMoveC2SPacket.LookAndOnGround(yaw,pitch, movePacket.isOnGround(),true);
             }else if (movePacket.changesLook() && movePacket.changesLook()){
-                newPacket = new PlayerMoveC2SPacket.Full(x,y,z,yaw,pitch,movePacket.isOnGround(),movePacket.isOnGround());
-            } else newPacket = new PlayerMoveC2SPacket.Full(x,y,z,yaw,pitch,movePacket.isOnGround(),movePacket.isOnGround());
+                newPacket = new PlayerMoveC2SPacket.Full(x,y,z,yaw,pitch,movePacket.isOnGround(),true);
+            } else newPacket = new PlayerMoveC2SPacket.Full(x,y,z,yaw,pitch,movePacket.isOnGround(),true);
             instance.sendPacket(newPacket);
+
+            RotationManager.INSTANCE.setServerPrevYaw(yaw);
+            RotationManager.INSTANCE.setServerPrevPitch(pitch);
+
         }else instance.sendPacket(packet);
 
     }
+
+
 }

@@ -73,7 +73,7 @@ object Hud : ComposeModule("Hud","界面") {
 
             Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxSize()) {
                 LazyColumn(horizontalAlignment = Alignment.End, modifier = Modifier.width(200.dp)){
-                    ModuleManager.modules.filter { it.enabled }.forEach {module ->
+                    ModuleManager.modules.filter { it.enabled }.sortedBy { it.name.length }.forEach {module ->
                        item {
                            Text(
                                text = module.name,

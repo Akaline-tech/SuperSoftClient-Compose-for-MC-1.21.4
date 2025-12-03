@@ -5,7 +5,6 @@ import com.xiamo.module.Module
 import com.xiamo.utils.rotation.Rotation
 import com.xiamo.utils.rotation.RotationManager
 import com.xiamo.utils.rotation.RotationManager.isActive
-import com.xiamo.utils.rotation.RotationManager.packetRotation
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.entity.LivingEntity

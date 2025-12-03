@@ -87,11 +87,10 @@ class ClickGuiScreen(val parentScreen : Screen? = null) : ComposeScreen(Text.of(
     }
     @Composable
     override fun renderCompose() {
-        val density = LocalDensity.current
-        val width = with(density){15.dp.toPx()}
-        val height = with(density){4.dp.toPx()}
-        val spacer = with(density){5.dp.toPx()}
-        val start = with(density){10.dp.toPx()}
+        val width = 100f
+        val height = 20f
+        val spacer =10f
+        val start = 20f
 
         LaunchedEffect(Unit )
         {
@@ -106,11 +105,11 @@ class ClickGuiScreen(val parentScreen : Screen? = null) : ComposeScreen(Text.of(
             )
         if (categories.count() ==0){
             var x = start
-            val y = with(density){40.dp.toPx()}
+            val y = 200
 
             Category.entries.forEach { category ->
-                categories.add(ClickGuiWindow(x.toInt(),y.toInt(),category,width,height))
-                x += with(density){(width + spacer).dp.toPx()}
+                categories.add(ClickGuiWindow(x.toInt(),y,category,width,height))
+                x += width*  MinecraftClient.getInstance().window.scaleFactor.toInt() + 20 *  MinecraftClient.getInstance().window.scaleFactor.toInt()
             }
 
         }
@@ -134,6 +133,9 @@ class ClickGuiScreen(val parentScreen : Screen? = null) : ComposeScreen(Text.of(
 
     }
 
+    override fun shouldPause(): Boolean {
+        return false
+    }
 
 
     override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {

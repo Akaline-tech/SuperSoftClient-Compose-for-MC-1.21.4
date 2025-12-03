@@ -79,14 +79,14 @@ object DynamicIsland : ComposeModule("DynamicIsland","灵动岛") {
                     if (MediaPlayer.isPlaying.value){
                         item {
                             Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                                Text(defaultTitle.value.replace("{fps}",fps.toString()) +"  —正在播放：" + MediaPlayer.song.value?.name, color = Color.White, fontSize = 8.sp)
+                                Text(defaultTitle.value.replace("{fps}",fps.toString()) +"  —正在播放：" + MediaPlayer.song.value?.name, color = Color.White, fontSize = 6.sp)
                                 AsyncImage(MediaPlayer.song.value?.image, modifier = Modifier.padding(start = 5.dp).size(12.dp).clip(RoundedCornerShape(1.dp)), contentDescription = null)
                             }
                         }
 
                     }else {
                         item {
-                            Text(defaultTitle.value.replace("{fps}",fps.toString()), color = Color.White, fontSize = 8.sp)
+                            Text(defaultTitle.value.replace("{fps}",fps.toString()), color = Color.White, fontSize = 6.sp)
                         }
                     }
                 }else {
