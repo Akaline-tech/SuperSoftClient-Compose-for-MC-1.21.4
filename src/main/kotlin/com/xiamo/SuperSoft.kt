@@ -17,6 +17,6 @@ object SuperSoft : ModInitializer {
 		logger.info("SuperSoft Loaded")
 		EvenManager
 		ModuleManager
-		ConfigManager
+		ConfigManager.init()
 	}
 }

@@ -1,52 +1,52 @@
 package com.xiamo.module.modules.render
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Colors
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.xiamo.module.ComposeModule
-import com.xiamo.utils.misc.LyricLine
 import com.xiamo.utils.misc.LyricLineProcessor.findCurrentIndex
 import com.xiamo.utils.misc.MediaPlayer
 import kotlinx.coroutines.launch
-import net.minecraft.text.Text
 import kotlin.math.abs
 
-object Lyric : ComposeModule("Lyric","歌词显示") {
+object Lyric : ComposeModule("Lyric", "歌词显示") {
     var currentIndex = mutableStateOf(0)
     var isVisible = mutableStateOf(false)
 
+    private val containerHeight = 100
+    private val containerWidth = 110
 
     init {
         this.enabled = true
@@ -66,54 +66,137 @@ object Lyric : ComposeModule("Lyric","歌词显示") {
             isVisible.value = MediaPlayer.isPlaying.value
         }
 
-
-
-        AnimatedVisibility(isVisible.value,enter = fadeIn(),exit = fadeOut()) {
+        AnimatedVisibility(
+            visible = isVisible.value,
+            enter = fadeIn(spring(stiffness = Spring.StiffnessLow)),
+            exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
+        ) {
             Box(modifier = Modifier.fillMaxSize()) {
-                LazyColumn(
+                Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
-                        .padding(horizontal = 5.dp, vertical = 5.dp)
-                        .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                        .height(120.dp)
-                        .width(100.dp)
-                        .wrapContentSize(Alignment.Center)
-                    ,
-                    state = listState,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(6.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.Black.copy(alpha = 0.7f))
+                        .height(containerHeight.dp)
+                        .width(containerWidth.dp)
                 ) {
-                    itemsIndexed(MediaPlayer.lyric) { index, line ->
-                        LyricText(
-                            line.text,
-                            color = Color.Gray,
-                            focusColors = Color.White,
-                            size = 5f,
-                            focusSize = 7f,
-                            isFocused = index == currentIndex.value
-                        )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        state = listState,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        contentPadding = PaddingValues(vertical = (containerHeight / 2 - 10).dp)
+                    ) {
+                        itemsIndexed(MediaPlayer.lyric) { index, line ->
+                            val distance = abs(index - currentIndex.value)
+                            AppleMusicLyricLine(
+                                text = line.text,
+                                distance = distance,
+                                isCurrent = index == currentIndex.value
+                            )
+                        }
                     }
                 }
             }
         }
 
         LaunchedEffect(currentIndex.value) {
-            val centerOffset = listState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.div(2) ?: 0
             scope.launch {
-                listState.animateScrollToItem(currentIndex.value, -centerOffset-150)
+                if (MediaPlayer.lyric.isNotEmpty() && currentIndex.value < MediaPlayer.lyric.size) {
+                    listState.animateScrollToItem(
+                        index = currentIndex.value,
+                        scrollOffset = 0
+                    )
+                }
             }
         }
     }
-
-
-
 }
 
-
-
 @Composable
-fun LyricText(line:String,color:Color,focusColors: Color,size : Float,focusSize:Float,isFocused:Boolean) {
-    val fontColor  = animateColorAsState(targetValue = if (isFocused) focusColors else color, tween(durationMillis = 300))
-    val fontSize = animateFloatAsState(targetValue = if (isFocused) focusSize else size,tween(durationMillis = 300))
-    Text(line,color = fontColor.value,fontSize = fontSize.value.sp,modifier = Modifier.padding(7.dp),textAlign = TextAlign.Center)
+fun AppleMusicLyricLine(
+    text: String,
+    distance: Int,
+    isCurrent: Boolean
+) {
+    val targetAlpha = when {
+        isCurrent -> 1f
+        distance == 1 -> 0.5f
+        distance == 2 -> 0.25f
+        else -> 0.1f
+    }
 
+    val targetScale = when {
+        isCurrent -> 1.05f
+        distance == 1 -> 0.9f
+        else -> 0.85f
+    }
+
+    val targetFontSize = when {
+        isCurrent -> 7.5f
+        distance == 1 -> 6f
+        else -> 5f
+    }
+
+    val targetBlur = when {
+        isCurrent -> 0f
+        distance == 1 -> 0.3f
+        else -> 0.8f
+    }
+
+    val alpha by animateFloatAsState(
+        targetValue = targetAlpha,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+
+    val scale by animateFloatAsState(
+        targetValue = targetScale,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+
+    val fontSize by animateFloatAsState(
+        targetValue = targetFontSize,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+
+    val blurAmount by animateFloatAsState(
+        targetValue = targetBlur,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                this.alpha = alpha
+                this.scaleX = scale
+                this.scaleY = scale
+            }
+            .then(
+                if (blurAmount > 0.1f) Modifier.blur(blurAmount.dp) else Modifier
+            )
+            .padding(horizontal = 5.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = fontSize.sp,
+            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+            textAlign = TextAlign.Center
+        )
+    }
 }

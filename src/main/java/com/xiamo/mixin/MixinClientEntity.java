@@ -1,115 +1,113 @@
 package com.xiamo.mixin;
 
-
-import com.xiamo.event.PlayerMovementTickPacketSendPre;
-import com.xiamo.utils.rotation.Rotation;
 import com.xiamo.utils.rotation.RotationManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * 客户端玩家 Mixin
+ * 实现服务端转头
+ *
+ * 注意：MoveFix 已移除，因为会导致 Simulation 违规。
+ * 玩家移动方向将基于自己的视角，而非服务端旋转。
+ *
+ * 关键时序：
+ * 1. MinecraftClient.tick() HEAD → TickEvent → KillAura 设置目标
+ * 2. ClientPlayerEntity.tick() HEAD → 更新 RotationManager，锁定 serverYaw
+ * 3. sendMovementPackets() → 发送锁定的 serverYaw
+ */
 @Mixin(ClientPlayerEntity.class)
-public class MixinClientEntity {
+public abstract class MixinClientEntity {
 
-    @Shadow
-    private float lastYaw;
+    // ===== 本tick的服务端旋转（在tick开始时锁定） =====
+    @Unique
+    private Float supersoft$currentTickServerYaw = null;
+    @Unique
+    private Float supersoft$currentTickServerPitch = null;
+    @Unique
+    private Float supersoft$currentTickPrevServerYaw = null;
+    @Unique
+    private Float supersoft$currentTickPrevServerPitch = null;
 
-    @Shadow
-    private float lastPitch;
+    // ===== 发送数据包时的原始值保存 =====
+    @Unique
+    private float supersoft$originalYaw;
+    @Unique
+    private float supersoft$originalPitch;
+    @Unique
+    private float supersoft$originalPrevYaw;
+    @Unique
+    private float supersoft$originalPrevPitch;
+    @Unique
+    private boolean supersoft$rotationModified = false;
 
+    /**
+     * 在 tick 开始时更新 RotationManager 并锁定本tick的服务端旋转
+     */
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void supersoft$onTickStart(CallbackInfo ci) {
+        // 更新转头管理器
+        RotationManager.INSTANCE.tick();
 
-
-    @Shadow
-    @Final
-    protected MinecraftClient client;
-
-
-
-    @Inject(method = "tick",at = @At("HEAD"))
-    private void onTick(CallbackInfo ci){
-        if (RotationManager.INSTANCE.isActive().getValue() && RotationManager.INSTANCE.getTargetRotation() != null) {
-           RotationManager.INSTANCE.soomthRotationToPacketRotation(RotationManager.INSTANCE.getTargetRotation(), 180f);
+        // 锁定本tick的服务端旋转值
+        if (RotationManager.INSTANCE.isActive() && RotationManager.INSTANCE.getTargetRotation() != null) {
+            supersoft$currentTickServerYaw = RotationManager.INSTANCE.getServerYawNeeded();
+            supersoft$currentTickServerPitch = RotationManager.INSTANCE.getServerPitchNeeded();
+            supersoft$currentTickPrevServerYaw = RotationManager.INSTANCE.getPrevServerYaw();
+            supersoft$currentTickPrevServerPitch = RotationManager.INSTANCE.getPrevServerPitch();
+        } else {
+            supersoft$currentTickServerYaw = null;
+            supersoft$currentTickServerPitch = null;
+            supersoft$currentTickPrevServerYaw = null;
+            supersoft$currentTickPrevServerPitch = null;
         }
-
     }
 
-//    @ModifyVariable(method = "sendMovementPackets",at = @At("STORE"),ordinal = 3)
-//    public double hookYaw(double value){
-//        if (RotationManager.INSTANCE.getTargetRotation() != null){
-//            return RotationManager.INSTANCE.getTargetRotation().getYaw();
-//        }else {
-//            return value;
-//        }
-//
-//    }
-//
-//    @ModifyVariable(method = "sendMovementPackets",at = @At("STORE"),ordinal = 4)
-//    public double hookPitch(double value){
-//        if (RotationManager.INSTANCE.getTargetRotation() != null){
-//            return RotationManager.INSTANCE.getTargetRotation().getPitch();
-//        }else {
-//            return value;
-//        }
-//
-//    }
+    /**
+     * 在发送移动数据包前修改旋转
+     * 注意：不修改移动计算，只修改发送的旋转
+     * 这意味着玩家会朝自己看的方向移动，但服务器看到的旋转不同
+     */
+    @Inject(method = "sendMovementPackets", at = @At("HEAD"))
+    private void supersoft$onPreSendMovementPackets(CallbackInfo ci) {
+        ClientPlayerEntity player = (ClientPlayerEntity) (Object) this;
 
+        if (supersoft$currentTickServerYaw != null && supersoft$currentTickServerPitch != null) {
+            // 保存原始值
+            supersoft$originalYaw = player.getYaw();
+            supersoft$originalPitch = player.getPitch();
+            supersoft$originalPrevYaw = player.prevYaw;
+            supersoft$originalPrevPitch = player.prevPitch;
+            supersoft$rotationModified = true;
 
-    @Inject(method = "sendMovementPackets",at = @At("HEAD"), cancellable = true)
-    private void onSendMovementPackets(CallbackInfo ci){
-        if (RotationManager.INSTANCE.isActive().getValue() && RotationManager.INSTANCE.getTargetRotation() != null) {
-            RotationManager.INSTANCE.soomthRotationToPacketRotation(RotationManager.INSTANCE.getTargetRotation(), 180f);
-        }
+            // 设置服务端旋转
+            player.setYaw(supersoft$currentTickServerYaw);
+            player.setPitch(supersoft$currentTickServerPitch);
 
-        if (this.client.player != null) {
-            PlayerMovementTickPacketSendPre event = new PlayerMovementTickPacketSendPre(
-                    this.client.player.getX(),
-                    this.client.player.getY(),
-                    this.client.player.getZ(),
-                    this.client.player.isOnGround()
-            );
-            event.broadcast();
-
-            if (event.isCancelled()) {
-                ci.cancel();
+            // 设置 prevYaw/prevPitch
+            if (supersoft$currentTickPrevServerYaw != null && supersoft$currentTickPrevServerPitch != null) {
+                player.prevYaw = supersoft$currentTickPrevServerYaw;
+                player.prevPitch = supersoft$currentTickPrevServerPitch;
             }
         }
     }
 
-    @Redirect(method = "sendMovementPackets",at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V"))
-    private void sendMovementPackets(ClientPlayNetworkHandler instance, Packet<?> packet){
-        if (packet instanceof PlayerMoveC2SPacket && RotationManager.INSTANCE.getTargetRotation() != null && RotationManager.INSTANCE.isActive().getValue()){
-            Rotation targetRotation = RotationManager.INSTANCE.getTargetRotation();
-            PlayerMoveC2SPacket movePacket = (PlayerMoveC2SPacket) packet;
-            Packet<?> newPacket;
-            float yaw = RotationManager.INSTANCE.getTargetRotation().getYaw();
-            float pitch = RotationManager.INSTANCE.getTargetRotation().getYaw();
-            if (targetRotation != null){
-                yaw = RotationManager.INSTANCE.getServerYaw();
-                pitch = RotationManager.INSTANCE.getServerPitch();
-            }
-            double x = movePacket.getX(this.client.player.getX());
-            double y = movePacket.getY(this.client.player.getY());
-            double z = movePacket.getZ(this.client.player.getZ());
-            if (movePacket.changesLook()){
-                newPacket = new PlayerMoveC2SPacket.LookAndOnGround(yaw,pitch, movePacket.isOnGround(),true);
-            }else if (movePacket.changesLook() && movePacket.changesLook()){
-                newPacket = new PlayerMoveC2SPacket.Full(x,y,z,yaw,pitch,movePacket.isOnGround(),true);
-            } else newPacket = new PlayerMoveC2SPacket.Full(x,y,z,yaw,pitch,movePacket.isOnGround(),true);
-            instance.sendPacket(newPacket);
+    /**
+     * 在发送移动数据包后恢复原始旋转
+     */
+    @Inject(method = "sendMovementPackets", at = @At("RETURN"))
+    private void supersoft$onPostSendMovementPackets(CallbackInfo ci) {
+        ClientPlayerEntity player = (ClientPlayerEntity) (Object) this;
 
-            RotationManager.INSTANCE.setServerPrevYaw(yaw);
-            RotationManager.INSTANCE.setServerPrevPitch(pitch);
-
-        }else instance.sendPacket(packet);
-
+        if (supersoft$rotationModified) {
+            player.setYaw(supersoft$originalYaw);
+            player.setPitch(supersoft$originalPitch);
+            player.prevYaw = supersoft$originalPrevYaw;
+            player.prevPitch = supersoft$originalPrevPitch;
+            supersoft$rotationModified = false;
+        }
     }
-
-
 }

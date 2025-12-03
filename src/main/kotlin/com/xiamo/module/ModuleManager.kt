@@ -4,6 +4,7 @@ import com.xiamo.SuperSoft
 import com.xiamo.gui.musicPlayer.MusicPlayerScreen
 import com.xiamo.module.modules.combat.KillAura
 import com.xiamo.module.modules.misc.MusicPlayer
+import com.xiamo.module.modules.movement.Speed
 import com.xiamo.module.modules.movement.Sprint
 import com.xiamo.module.modules.render.ClickGui
 import com.xiamo.module.modules.render.DynamicIsland
@@ -27,6 +28,7 @@ object ModuleManager {
         modules.add(MusicPlayer)
         modules.add(Lyric)
         modules.add(Sprint)
+        modules.add(Speed)
         modules.add(KillAura)
 
 

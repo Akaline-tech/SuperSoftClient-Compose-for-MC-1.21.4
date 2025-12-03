@@ -18,15 +18,22 @@ public class MixinLivingEntityRenderer {
     @Unique
     private LivingEntity renderEntity;
 
+    @Unique
+    private float tickDelta;
+
     @Inject(
             method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V",
             at = @At("HEAD")
     )
     private void onUpdateRenderState(LivingEntity entity, LivingEntityRenderState state, float tickDelta, CallbackInfo ci) {
         this.renderEntity = entity;
+        this.tickDelta = tickDelta;
         RotationManager.INSTANCE.setTickDelta(tickDelta);
     }
 
+    /**
+     * 修改玩家的 Pitch 渲染
+     */
     @ModifyExpressionValue(
             method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V",
             at = @At(
@@ -36,14 +43,17 @@ public class MixinLivingEntityRenderer {
     )
     private float hookPitch(float original) {
         if (renderEntity != MinecraftClient.getInstance().player) return original;
-        if (!RotationManager.INSTANCE.isActive().getValue()) return original;
+        if (!RotationManager.INSTANCE.isActive()) return original;
+        if (!RotationManager.INSTANCE.getRenderRotation()) return original;
         if (RotationManager.INSTANCE.getTargetRotation() != null) {
-            return RotationManager.INSTANCE.soomthRotationToRenderRotation(RotationManager.INSTANCE.getTargetRotation()).getPitch();
+            return RotationManager.INSTANCE.getLerpedRenderPitch(tickDelta, original);
         }
         return original;
     }
 
-
+    /**
+     * 修改玩家的身体 Yaw 渲染
+     */
     @ModifyExpressionValue(
             method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V",
             at = @At(
@@ -53,13 +63,17 @@ public class MixinLivingEntityRenderer {
     )
     private float hookBodyYaw(float original) {
         if (renderEntity != MinecraftClient.getInstance().player) return original;
-        if (!RotationManager.INSTANCE.isActive().getValue()) return original;
+        if (!RotationManager.INSTANCE.isActive()) return original;
+        if (!RotationManager.INSTANCE.getRenderRotation()) return original;
         if (RotationManager.INSTANCE.getTargetRotation() != null) {
-            return RotationManager.INSTANCE.soomthRotationToRenderRotation(RotationManager.INSTANCE.getTargetRotation()).getYaw();
+            return RotationManager.INSTANCE.getLerpedRenderYaw(tickDelta, original);
         }
         return original;
     }
 
+    /**
+     * 修改玩家的头部 Yaw 渲染
+     */
     @ModifyExpressionValue(
             method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V",
             at = @At(
@@ -70,9 +84,10 @@ public class MixinLivingEntityRenderer {
     )
     private float hookHeadYaw(float original) {
         if (renderEntity != MinecraftClient.getInstance().player) return original;
-        if (!RotationManager.INSTANCE.isActive().getValue()) return original;
+        if (!RotationManager.INSTANCE.isActive()) return original;
+        if (!RotationManager.INSTANCE.getRenderRotation()) return original;
         if (RotationManager.INSTANCE.getTargetRotation() != null) {
-            return  RotationManager.INSTANCE.soomthRotationToRenderRotation(RotationManager.INSTANCE.getTargetRotation()).getYaw();
+            return RotationManager.INSTANCE.getLerpedRenderYaw(tickDelta, original);
         }
         return original;
     }

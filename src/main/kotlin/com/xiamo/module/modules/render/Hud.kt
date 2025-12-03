@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.xiamo.module.ComposeModule
 import com.xiamo.module.ModuleManager
+import com.xiamo.setting.AbstractSetting
+import com.xiamo.setting.ModeSetting
 import com.xiamo.setting.StringSetting
 
 import org.jetbrains.skia.paragraph.Shadow
@@ -75,8 +77,9 @@ object Hud : ComposeModule("Hud","界面") {
                 LazyColumn(horizontalAlignment = Alignment.End, modifier = Modifier.width(200.dp)){
                     ModuleManager.modules.filter { it.enabled }.sortedBy { it.name.length }.forEach {module ->
                        item {
+                           val args = module.settings.filterIsInstance(ModeSetting::class.java).firstOrNull()?.value
                            Text(
-                               text = module.name,
+                               text = module.name + if (args == null) "" else " | ${args}",
                                fontSize = 8.sp,
                                color = Color.White,
                                modifier = Modifier

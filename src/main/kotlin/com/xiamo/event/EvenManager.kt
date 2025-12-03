@@ -4,6 +4,7 @@ import androidx.compose.material.Switch
 import com.xiamo.SuperSoft
 import com.xiamo.gui.titleScreen.TitleScreen
 import com.xiamo.module.ModuleManager
+import com.xiamo.utils.rotation.RotationManager
 import net.minecraft.client.MinecraftClient
 import org.lwjgl.glfw.GLFW
 
@@ -61,6 +62,7 @@ object  EvenManager {
         ModuleManager.modules.filter { it.enabled }.forEach {
             it.onTick()
         }
+        //RotationManager.tick()
     }
 
 
