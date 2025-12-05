@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 object KillAura : Module("KillAura", "自动攻击附近的实体", Category.Combat) {
     var isAttacking = mutableStateOf(false)
-    var targetObject: LivingEntity? = null
+    var targetObject = mutableStateOf<LivingEntity?>(null)
 
     private val rangeSetting = numberSetting(
         "Range", "攻击范围",
@@ -93,12 +93,18 @@ object KillAura : Module("KillAura", "自动攻击附近的实体", Category.Com
         RotationManager.randomizationEnabled = randomizeSetting.value
     }
 
+    override fun toggle() {
+        RotationManager.reset()
+        super.toggle()
+    }
+
     override fun enable() {
         updateRotationConfig()
         currentTarget = null
         lastTargetPos = null
         super.enable()
     }
+
 
     override fun onTick() {
         val mc = MinecraftClient.getInstance()
@@ -131,7 +137,7 @@ object KillAura : Module("KillAura", "自动攻击附近的实体", Category.Com
 
         val target = targets.minByOrNull { it.distanceTo(player) } ?: return
         isAttacking.value = true
-        targetObject = target
+        targetObject.value = target
 
 
         val targetPos = getTargetPosition(target)
@@ -315,6 +321,7 @@ object KillAura : Module("KillAura", "自动攻击附近的实体", Category.Com
         currentTarget = null
         lastTargetPos = null
         RotationManager.clearTarget()
+        isAttacking.value = false
         super.disable()
     }
 }

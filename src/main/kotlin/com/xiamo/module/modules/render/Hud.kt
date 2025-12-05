@@ -1,16 +1,15 @@
 package com.xiamo.module.modules.render
 
-import androidx.compose.animation.Animatable
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandIn
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -45,14 +44,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.decodeToImageBitmap
 import androidx.compose.ui.graphics.painter.BrushPainter
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.xiamo.SuperSoft
 import com.xiamo.module.ComposeModule
 import com.xiamo.module.ModuleManager
 import com.xiamo.module.modules.combat.KillAura
@@ -63,8 +62,21 @@ import com.xiamo.setting.StringSetting
 import com.xiamo.utils.config.ConfigManager
 import net.minecraft.client.MinecraftClient
 import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.entity.mob.HostileEntity
+import net.minecraft.entity.passive.PassiveEntity
+import net.minecraft.registry.Registries
 
-import org.jetbrains.skia.paragraph.Shadow
+import java.net.URL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.runtime.setValue
+import coil3.compose.AsyncImage
 
 object Hud : ComposeModule("Hud","界面") {
     var title = StringSetting("Title","HUD标题","SuperSoft")
@@ -142,27 +154,125 @@ object Hud : ComposeModule("Hud","界面") {
 
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart){
                 AnimatedVisibility(visible = KillAura.isAttacking.value,enter = fadeIn() + scaleIn(), exit = fadeOut() + scaleOut() ) {
-                    var positon : Offset? = null
                     if (KillAura.targetBarSetting.value) {
-                        Row(modifier = Modifier
-                            .padding(start = 50.dp)
-                            .width(150.dp)
-                            .height(60.dp)
-                            .background(Color.Black.copy(0.5f),RoundedCornerShape(10.dp))
-                            .onGloballyPositioned{
-                                layoutCoordinates ->
-                                    positon = layoutCoordinates.positionInParent()
+                        val target = KillAura.targetObject.value
+                        if (target != null) {
+                            key(target.uuid) {
+                                val targetName = target.name.string
+
+                                var currentHealth by remember { mutableStateOf(target.health) }
+                                var maxHealth by remember { mutableStateOf(target.maxHealth) }
+
+                                LaunchedEffect(Unit) {
+                                    while (true) {
+                                        currentHealth = target.health
+                                        maxHealth = target.maxHealth
+                                        kotlinx.coroutines.delay(50)
+                                    }
+                                }
+
+                                val healthPercent = (currentHealth / maxHealth).coerceIn(0f, 1f)
+                                val animatedHealthPercent by animateFloatAsState(
+                                    targetValue = healthPercent,
+                                    animationSpec = tween(durationMillis = 300),
+                                    label = "health"
+                                )
+
+                                val targetHead = "https://mc-heads.net/avatar/$targetName/64"
+
+                                val delayedHealthPercent = remember { mutableStateOf(healthPercent) }
+                                LaunchedEffect(healthPercent) {
+                                    kotlinx.coroutines.delay(100)
+                                    delayedHealthPercent.value = healthPercent
+                                }
+
+                                val animatedDelayedHealth by animateFloatAsState(
+                                    targetValue = delayedHealthPercent.value,
+                                    animationSpec = tween(durationMillis = 500),
+                                    label = "delayedHealth"
+                                )
+
+                                val healthColor by animateColorAsState(
+                                    targetValue = when {
+                                        healthPercent > 0.6f -> Color(0xFF4CAF50)
+                                        healthPercent > 0.3f -> Color(0xFFFF9800)
+                                        else -> Color(0xFFF44336)
+                                    },
+                                    animationSpec = tween(durationMillis = 300),
+                                    label = "healthColor"
+                                )
+
+                                Row(
+                                    modifier = Modifier
+                                        .padding(start = 50.dp)
+                                        .width(150.dp)
+                                        .background(Color.Black.copy(0.6f), RoundedCornerShape(10.dp))
+                                        .padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.Gray.copy(0.3f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        AsyncImage(model = targetHead, contentDescription = null, modifier = Modifier.fillMaxSize())
+                                    }
+
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(
+                                            text = targetName,
+                                            color = Color.White,
+                                            fontSize = 12.sp,
+                                            style = TextStyle(
+                                                shadow = androidx.compose.ui.graphics.Shadow(
+                                                    Color.Black, offset = Offset(1f, 1f), blurRadius = 3f
+                                                )
+                                            )
+                                        )
+
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(5.dp)
+                                                .background(Color.Gray.copy(0.5f), RoundedCornerShape(4.dp))
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth(animatedDelayedHealth)
+                                                    .height(5.dp)
+                                                    .background(Color(0xFFFF5252), RoundedCornerShape(4.dp))
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth(animatedHealthPercent)
+                                                    .height(5.dp)
+                                                    .background(healthColor, RoundedCornerShape(4.dp))
+                                            )
+                                        }
+
+                                        Text(
+                                            text = "%.1f / %.1f".format(currentHealth, maxHealth),
+                                            color = Color.White.copy(0.8f),
+                                            fontSize = 7.sp
+                                        )
+                                    }
+                                }
                             }
-                        )
-                        {
-                            KillAura.targetObject
                         }
                     }
                 }
-
-
             }
 
         }
     }
 }
+
+
+
+

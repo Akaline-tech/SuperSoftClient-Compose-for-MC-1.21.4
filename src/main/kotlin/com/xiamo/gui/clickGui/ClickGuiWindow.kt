@@ -28,10 +28,15 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -216,63 +221,39 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
             targetValue = if (isHovered) 1f else 0f,
             animationSpec = tween(durationMillis = 150)
         )
-        Row(modifier = Modifier.fillMaxWidth().height(15.dp).hoverable(interactionSource)
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(15.dp)
+                .background(ClickGuiColors.settingHoverColor.copy(alpha = bgAlpha))
+                .hoverable(interactionSource)
                 .clickable {
                     setting.value = !setting.value
                     module.onSettingChanged(setting)
                 }
-                .padding(vertical = 2.dp, horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
+                .padding(vertical = 2.dp, horizontal = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
                 text = setting.name,
                 fontSize = settingFont,
                 color = ClickGuiColors.textSecondaryColor
             )
-            Switch(
+
+            CustomSwitch(
                 checked = setting.value,
-                onCheckedChange = {setting.value = it},
-                modifier = Modifier.scale(0.25f),
-                colors = SwitchDefaults.colors(checkedTrackColor = Color.Blue),
+                onCheckedChange = {
+                    setting.value = it
+                    module.onSettingChanged(setting)
+                },
+                width = 24.dp,
+                height = 12.dp,
+                checkedTrackColor = ClickGuiColors.accentColor,
+                uncheckedTrackColor = Color.Gray.copy(alpha = 0.4f)
             )
         }
-
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .background(ClickGuiColors.settingHoverColor.copy(alpha = bgAlpha))
-//                .hoverable(interactionSource)
-//                .clickable {
-//                    setting.value = !setting.value
-//                    module.onSettingChanged(setting)
-//                }
-//                .padding(vertical = 2.dp, horizontal = 4.dp),
-//            horizontalArrangement = Arrangement.SpaceBetween,
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            Text(
-//                text = setting.name,
-//                fontSize = settingFont,
-//                color = ClickGuiColors.textSecondaryColor
-//            )
-//
-//            Box(
-//                modifier = Modifier
-//                    .size(12.dp)
-//                    .background(
-//                        if (setting.value) ClickGuiColors.accentColor else Color.Gray,
-//                        RoundedCornerShape(2.dp)
-//                    )
-//            ) {
-//                if (setting.value) {
-//                    Text(
-//                        text = "✓",
-//                        fontSize = 8.sp,
-//                        color = ClickGuiColors.textColor,
-//                        modifier = Modifier.align(Alignment.Center)
-//                    )
-//                }
-//            }
-//        }
     }
 
     @Composable
@@ -762,6 +743,56 @@ fun StringTextField(
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Composable
+fun CustomSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    width: Dp = 36.dp,
+    height: Dp = 20.dp,
+    checkedTrackColor: Color = Color(0xFF6200EE),
+    uncheckedTrackColor: Color = Color.Gray.copy(alpha = 0.5f),
+    thumbColor: Color = Color.White
+) {
+    val thumbPadding = 2.dp
+    val thumbSize = height - thumbPadding * 2
+
+    val thumbOffset by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = tween(durationMillis = 150)
+    )
+
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) checkedTrackColor else uncheckedTrackColor,
+        animationSpec = tween(durationMillis = 150)
+    )
+
+    Box(
+        modifier = modifier
+            .width(width)
+            .height(height)
+            .clip(RoundedCornerShape(height / 2))
+            .background(trackColor)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { onCheckedChange(!checked) },
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(thumbPadding)
+                .offset {
+                    val maxOffset = (width - thumbSize - thumbPadding * 2).toPx()
+                    IntOffset((thumbOffset * maxOffset).toInt(), 0)
+                }
+                .size(thumbSize)
+                .clip(RoundedCornerShape(50))
+                .background(thumbColor)
+        )
     }
 }
 

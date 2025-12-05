@@ -31,9 +31,7 @@ public class MixinLivingEntityRenderer {
         RotationManager.INSTANCE.setTickDelta(tickDelta);
     }
 
-    /**
-     * 修改玩家的 Pitch 渲染
-     */
+
     @ModifyExpressionValue(
             method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V",
             at = @At(
@@ -51,9 +49,7 @@ public class MixinLivingEntityRenderer {
         return original;
     }
 
-    /**
-     * 修改玩家的身体 Yaw 渲染
-     */
+
     @ModifyExpressionValue(
             method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V",
             at = @At(
@@ -71,9 +67,7 @@ public class MixinLivingEntityRenderer {
         return original;
     }
 
-    /**
-     * 修改玩家的头部 Yaw 渲染
-     */
+
     @ModifyExpressionValue(
             method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V",
             at = @At(

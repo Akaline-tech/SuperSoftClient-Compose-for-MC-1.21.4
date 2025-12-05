@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
-	id 'fabric-loom' version "${loom_version}"
+    id 'fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 	id "org.jetbrains.kotlin.jvm" version "2.2.21"
 	alias(libs.plugins.jetbrainsCompose)
@@ -52,7 +52,7 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
 
 	shade("org.openjfx:javafx-media:20.0.2:win")
-	shade(compose.desktop.currentOs) // 如果你用了 compose 插件
+	shade(compose.desktop.currentOs)
 	shade(compose.ui)
 	shade(compose.foundation)
 	shade(compose.material3)
@@ -63,7 +63,7 @@ dependencies {
     shade("com.github.goxr3plus:java-stream-player:10.0.2")
     shade("io.coil-kt.coil3:coil-compose:3.3.0")
     shade("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
-
+    shade("dev.muazkadan:switchy-compose:0.7.0")
 
 
 }
