@@ -7,82 +7,43 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-
+/**
+ * ClientPlayerEntity Mixin - 处理旋转同步和移动修复
+ *
+ * 关键流程:
+ * 1. tick() 开始 -> 更新RotationManager -> 应用服务器旋转
+ * 2. tickMovement() -> 使用服务器旋转计算移动
+ * 3. sendMovementPackets() -> 发送服务器旋转
+ * 4. sendMovementPackets() 结束 -> 恢复客户端旋转
+ */
 @Mixin(ClientPlayerEntity.class)
 public abstract class MixinClientEntity {
 
+    @Unique
+    private boolean supersoft$rotationApplied = false;
 
-    @Unique
-    private Float supersoft$currentTickServerYaw = null;
-    @Unique
-    private Float supersoft$currentTickServerPitch = null;
-    @Unique
-    private Float supersoft$currentTickPrevServerYaw = null;
-    @Unique
-    private Float supersoft$currentTickPrevServerPitch = null;
-
-
-    @Unique
-    private float supersoft$originalYaw;
-    @Unique
-    private float supersoft$originalPitch;
-    @Unique
-    private float supersoft$originalPrevYaw;
-    @Unique
-    private float supersoft$originalPrevPitch;
-    @Unique
-    private boolean supersoft$rotationModified = false;
-
-
+    /**
+     * tick开始时:
+     * 1. 更新RotationManager
+     * 2. 应用服务器旋转到玩家 (这样tickMovement会使用正确的yaw)
+     */
     @Inject(method = "tick", at = @At("HEAD"))
     private void supersoft$onTickStart(CallbackInfo ci) {
+        // 更新旋转管理器
         RotationManager.INSTANCE.tick();
 
-        if (RotationManager.INSTANCE.isActive() && RotationManager.INSTANCE.getTargetRotation() != null) {
-            supersoft$currentTickServerYaw = RotationManager.INSTANCE.getServerYawNeeded();
-            supersoft$currentTickServerPitch = RotationManager.INSTANCE.getServerPitchNeeded();
-            supersoft$currentTickPrevServerYaw = RotationManager.INSTANCE.getPrevServerYaw();
-            supersoft$currentTickPrevServerPitch = RotationManager.INSTANCE.getPrevServerPitch();
-        } else {
-            supersoft$currentTickServerYaw = null;
-            supersoft$currentTickServerPitch = null;
-            supersoft$currentTickPrevServerYaw = null;
-            supersoft$currentTickPrevServerPitch = null;
-        }
+        // 应用旋转 (会保存客户端旋转并设置服务器旋转)
+        supersoft$rotationApplied = RotationManager.INSTANCE.applyRotationToPlayer();
     }
 
-
-    @Inject(method = "sendMovementPackets", at = @At("HEAD"))
-    private void supersoft$onPreSendMovementPackets(CallbackInfo ci) {
-        ClientPlayerEntity player = (ClientPlayerEntity) (Object) this;
-
-        if (supersoft$currentTickServerYaw != null && supersoft$currentTickServerPitch != null) {
-            supersoft$originalYaw = player.getYaw();
-            supersoft$originalPitch = player.getPitch();
-            supersoft$originalPrevYaw = player.prevYaw;
-            supersoft$originalPrevPitch = player.prevPitch;
-            supersoft$rotationModified = true;
-            player.setYaw(supersoft$currentTickServerYaw);
-            player.setPitch(supersoft$currentTickServerPitch);
-
-            if (supersoft$currentTickPrevServerYaw != null && supersoft$currentTickPrevServerPitch != null) {
-                player.prevYaw = supersoft$currentTickPrevServerYaw;
-                player.prevPitch = supersoft$currentTickPrevServerPitch;
-            }
-        }
-    }
-
-
+    /**
+     * sendMovementPackets结束后恢复客户端旋转
+     */
     @Inject(method = "sendMovementPackets", at = @At("RETURN"))
     private void supersoft$onPostSendMovementPackets(CallbackInfo ci) {
-        ClientPlayerEntity player = (ClientPlayerEntity) (Object) this;
-
-        if (supersoft$rotationModified) {
-            player.setYaw(supersoft$originalYaw);
-            player.setPitch(supersoft$originalPitch);
-            player.prevYaw = supersoft$originalPrevYaw;
-            player.prevPitch = supersoft$originalPrevPitch;
-            supersoft$rotationModified = false;
+        if (supersoft$rotationApplied) {
+            RotationManager.INSTANCE.restoreClientRotation();
+            supersoft$rotationApplied = false;
         }
     }
 }

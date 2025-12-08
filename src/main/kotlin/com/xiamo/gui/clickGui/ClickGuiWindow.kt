@@ -129,7 +129,7 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
     private fun ModuleItem(module: Module) {
         val interactionSource = remember { MutableInteractionSource() }
         val isHovered by interactionSource.collectIsHoveredAsState()
-        val fontWeightAnimation = animateFloatAsState(if (module.enabled) 500f else 5f,
+        val fontWeightAnimation = animateFloatAsState(if (module.enabled) 600f else 300f,
 
         )
         val moduleBgColor by animateColorAsState(
