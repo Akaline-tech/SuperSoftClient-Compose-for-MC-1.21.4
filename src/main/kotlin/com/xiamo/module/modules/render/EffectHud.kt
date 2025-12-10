@@ -13,16 +13,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -40,7 +43,7 @@ object EffectHud : ComposeModule("EffectHud","效果显示") {
         val player = MinecraftClient.getInstance().player
         if(player == null) return
 
-        Box(modifier = Modifier.fillMaxSize().padding(bottom = 10.dp, end = 2.dp), contentAlignment = Alignment.BottomEnd) {
+        Box(modifier = Modifier.fillMaxSize().padding(bottom = 10.dp, end = 2.dp), contentAlignment = Alignment.BottomStart) {
             var collection: MutableCollection<StatusEffectInstance?> = player.statusEffects
             if (tickCounter.value != 0f) {
                 collection = player.statusEffects
@@ -48,14 +51,15 @@ object EffectHud : ComposeModule("EffectHud","效果显示") {
                     return
                 }
             }
-            LazyColumn(modifier = Modifier.align(Alignment.BottomEnd).animateContentSize(), reverseLayout = true) {
+            LazyColumn(modifier = Modifier.animateContentSize(), reverseLayout = true) {
                 for (status in collection ) {
                     item {
                         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier
                             .padding(2.dp)
                             .width(90.dp)
                             .height(30.dp)
-                            .background(color = Color.White.copy(alpha = 0.6f),shape = RoundedCornerShape(15))
+                            .background(color = Color.Black.copy(alpha = 0.6f),shape = RoundedCornerShape(30))
+
                             .padding(horizontal = 5.dp)
                             ,verticalAlignment = Alignment.CenterVertically)
                         {
@@ -65,9 +69,9 @@ object EffectHud : ComposeModule("EffectHud","效果显示") {
                                 )
                                 status?.duration?.let {
                                     if (it ==  -1){
-                                        Text(("∞"),fontSize = 5.sp, textAlign = TextAlign.Center)
+                                        Text(("∞"),fontSize = 5.sp, textAlign = TextAlign.Center,color = Color.White.copy(alpha = 0.4f),)
                                     }else {
-                                        Text((it / 20).toString() + "s",fontSize = 5.sp, textAlign = TextAlign.Center)
+                                        Text((it / 20).toString() + "s",fontSize = 5.sp, textAlign = TextAlign.Center,color = Color.White.copy(alpha = 0.4f))
 
                                     }
                                 }

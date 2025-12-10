@@ -3,7 +3,9 @@ package com.xiamo.module.modules.render
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -43,6 +45,7 @@ import com.xiamo.setting.StringSetting
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material.ListItem
 import androidx.compose.runtime.setValue
 import coil3.compose.AsyncImage
 
@@ -77,10 +80,10 @@ object Hud : ComposeModule("Hud","界面") {
                                fontSize = 8.sp,
                                color = Color.White,
                                modifier = Modifier
-                                   .background(Color(255f, 255f, 255f, 0.6f), RoundedCornerShape(2.dp))
+                                   .background(Color(0f, 0f, 0f, 0.6f), RoundedCornerShape(2.dp))
                                    .padding(horizontal = 4.dp, vertical = 2.dp)
                                    .animateContentSize()
-                                   .animateItem()
+                                   .animateItem(placementSpec = spring(stiffness = Spring.StiffnessLow))
                                ,
                                textAlign = TextAlign.Right,
                                style = TextStyle(shadow = androidx.compose.ui.graphics.Shadow(Color.Black, offset = Offset(1f,1f), blurRadius = 5f))
@@ -175,7 +178,7 @@ object Hud : ComposeModule("Hud","界面") {
 
                                 Row(
                                     modifier = Modifier
-                                        .padding(start = 50.dp)
+                                        .padding(start = 120.dp, top = 150.dp)
                                         .width(150.dp)
                                         .background(Color.Black.copy(0.6f), RoundedCornerShape(10.dp))
                                         .padding(8.dp),

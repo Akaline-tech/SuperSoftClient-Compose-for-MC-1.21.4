@@ -1,6 +1,13 @@
 package com.xiamo.module.modules.render
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,7 +60,6 @@ object DynamicIsland : ComposeModule("DynamicIsland","灵动岛") {
                 kotlinx.coroutines.delay(16)
             }
         }
-
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             LazyColumn(modifier = Modifier
                 .padding(top=16.dp)
