@@ -74,10 +74,15 @@ object Lyric : ComposeModule("Lyric", "歌词显示") {
             exit = fadeOut(spring(stiffness = Spring.StiffnessMedium))
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
+                Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.fillMaxSize()) {
+                    com.xiamo.gui.hud.HudComponent(
+                        componentId = "lyric",
+                        moduleName = "Lyric",
+                        defaultX = (net.minecraft.client.MinecraftClient.getInstance().window.width / 2f) - (containerWidth / 2f),
+                        defaultY = net.minecraft.client.MinecraftClient.getInstance().window.height.toFloat() - containerHeight.toFloat() - 50f
+                    ) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 50.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .background(Color.Black.copy(alpha = 0.7f))
                         .height(containerHeight.dp)
@@ -99,6 +104,8 @@ object Lyric : ComposeModule("Lyric", "歌词显示") {
                             )
                         }
                     }
+                }
+                }
                 }
             }
         }

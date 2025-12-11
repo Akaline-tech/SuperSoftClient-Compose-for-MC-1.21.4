@@ -1,6 +1,9 @@
 package com.xiamo.module
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.InternalComposeUiApi
 import androidx.compose.ui.geometry.Offset
@@ -38,6 +41,9 @@ open class ComposeModule(name : String, description : String) : Module(name,desc
     var surface: Surface? = null
     @OptIn(InternalComposeUiApi::class)
     var composeScene : ComposeScene? = null
+
+
+    private val componentPositions = mutableMapOf<String, Pair<Float, Float>>()
 
 
 
@@ -167,6 +173,57 @@ open class ComposeModule(name : String, description : String) : Module(name,desc
 
 
         super.onKey(keyCode, keyState)
+    }
+
+    fun saveComponentPositions(positions: Map<String, Pair<Float, Float>>) {
+        componentPositions.clear()
+        componentPositions.putAll(positions)
+
+
+        positions.forEach { (componentId, pos) ->
+            val xKey = "Component_${componentId}_X"
+            val yKey = "Component_${componentId}_Y"
+
+
+            var xSetting = settings.find { it.name == xKey } as? com.xiamo.setting.NumberSetting
+            var ySetting = settings.find { it.name == yKey } as? com.xiamo.setting.NumberSetting
+
+            if (xSetting == null) {
+                xSetting = numberSetting(xKey, "Component $componentId X", pos.first.toDouble(), -10000.0, 10000.0, 1.0)
+                xSetting.visible = false
+            } else {
+                xSetting.value = pos.first.toDouble()
+            }
+
+            if (ySetting == null) {
+                ySetting = numberSetting(yKey, "Component $componentId Y", pos.second.toDouble(), -10000.0, 10000.0, 1.0)
+                ySetting.visible = false
+            } else {
+                ySetting.value = pos.second.toDouble()
+            }
+        }
+
+        com.xiamo.utils.config.ConfigManager.saveModule(this)
+    }
+
+    fun loadComponentPosition(componentId: String, defaultX: Float, defaultY: Float): Pair<Float, Float> {
+
+
+        componentPositions[componentId]?.let { return it }
+
+
+        val xKey = "Component_${componentId}_X"
+        val yKey = "Component_${componentId}_Y"
+
+        val xSetting = settings.find { it.name == xKey } as? com.xiamo.setting.NumberSetting
+        val ySetting = settings.find { it.name == yKey } as? com.xiamo.setting.NumberSetting
+
+        val x = xSetting?.value?.toFloat() ?: defaultX
+        val y = ySetting?.value?.toFloat() ?: defaultY
+
+        val position = Pair(x, y)
+        componentPositions[componentId] = position
+        return position
     }
 
 

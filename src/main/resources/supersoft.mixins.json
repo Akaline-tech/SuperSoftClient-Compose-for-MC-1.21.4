@@ -21,6 +21,7 @@
     "MixinLivingEntityRenderer",
     "MixinMouse",
     "MixinTick",
+    "MixinWindow",
     "MixinWorldRenderer"
   ]
 }

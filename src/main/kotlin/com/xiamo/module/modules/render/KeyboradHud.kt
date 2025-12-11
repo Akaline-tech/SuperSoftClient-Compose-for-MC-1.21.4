@@ -137,7 +137,13 @@ object KeyboradHud : ComposeModule("KeyboradHud","键盘可视化") {
 
 
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopStart) {
-            Column(modifier = Modifier.offset(offsetX.value.dp,offsetY.value.dp).width(100.dp).align(Alignment.TopStart)) {
+            com.xiamo.gui.hud.HudComponent(
+                componentId = "keyboard",
+                moduleName = "KeyboradHud",
+                defaultX = offsetX.value,
+                defaultY = offsetY.value
+            ) {
+            Column(modifier = Modifier.width(100.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(),horizontalArrangement = Arrangement.Center){
                    Button(interactionSource = forwardInteractionSource,onClick = {
                    }, modifier = buttonModifier
@@ -167,9 +173,8 @@ object KeyboradHud : ComposeModule("KeyboradHud","键盘可视化") {
                 }
 
             }
+            }
         }
-
-
 
         super.renderCompose()
     }
