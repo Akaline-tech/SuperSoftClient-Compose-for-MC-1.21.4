@@ -1,4 +1,8 @@
-让Jetbrains Compose通过skia在Minecraft上绘制
+#SuperSoft
+
+> 让Jetbrains Compose通过skia在Minecraft上绘制
+> 用的音乐API项目 ： https://neteasecloudmusicapienhanced.js.org/#/
+
 
 
 <img width="1280" height="800" alt="屏幕截图 2025-12-10 192529" src="https://github.com/user-attachments/assets/52102f64-a3eb-4384-b2fb-e8f344ecf48d" />
