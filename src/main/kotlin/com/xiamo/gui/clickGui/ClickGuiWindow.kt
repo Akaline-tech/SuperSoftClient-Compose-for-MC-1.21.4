@@ -273,6 +273,7 @@ class ClickGuiWindow(val x: Int, val y: Int, val category: Category, val width: 
 
     @Composable
     private fun NumberSettingItem(setting: NumberSetting, module: Module) {
+        if (setting.name.startsWith("Component")) return
         val interactionSource = remember { MutableInteractionSource() }
         val isHovered by interactionSource.collectIsHoveredAsState()
 
