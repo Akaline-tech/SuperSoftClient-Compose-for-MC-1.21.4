@@ -154,3 +154,7 @@ tasks.named('remapJar') {
 	inputFile.set(tasks.shadowJar.archiveFile)
 	dependsOn tasks.shadowJar
 }
+
+loom {
+    accessWidenerPath = file("src/main/resources/supersoft.accesswidener")
+}

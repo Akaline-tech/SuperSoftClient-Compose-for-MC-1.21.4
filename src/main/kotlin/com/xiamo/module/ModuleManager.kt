@@ -13,6 +13,7 @@ import com.xiamo.module.modules.render.EffectHud
 import com.xiamo.module.modules.render.Hud
 import com.xiamo.module.modules.render.KeyboradHud
 import com.xiamo.module.modules.render.Lyric
+import com.xiamo.module.modules.render.NameTags
 import java.util.concurrent.CopyOnWriteArrayList
 
 object ModuleManager {
@@ -33,6 +34,7 @@ object ModuleManager {
         modules.add(Brightness)
         modules.add(EffectHud)
         modules.add(KeyboradHud)
+        modules.add(NameTags)
 
 
 

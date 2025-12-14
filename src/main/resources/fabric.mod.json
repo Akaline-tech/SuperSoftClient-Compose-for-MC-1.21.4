@@ -34,5 +34,6 @@
 	},
 	"suggests": {
 		"another-mod": "*"
-	}
+	},
+  "accesswidener": "supersoft.accesswidener"
 }
