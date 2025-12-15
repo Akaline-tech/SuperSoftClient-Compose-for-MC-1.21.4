@@ -3,6 +3,8 @@
 > 让Jetbrains Compose通过skia在Minecraft上绘制
 > 
 > 用的音乐API项目 ： https://neteasecloudmusicapienhanced.js.org/#/
+>
+> 有没有Contributor  /(ㄒoㄒ)/~~
 
 
 
