@@ -5,5 +5,6 @@ enum class Category {
     Movement,
     Render,
     World,
-    Misc
+    Misc,
+    Player
 }
