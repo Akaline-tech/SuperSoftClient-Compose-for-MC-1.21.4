@@ -17,6 +17,7 @@
     "MixinClientPlayerEntity",
     "MixinEntity",
     "MixinEntityRenderDispatcher",
+    "MixinHandleScreen",
     "MixinKey",
     "MixinLivingEntityRenderer",
     "MixinMouse",

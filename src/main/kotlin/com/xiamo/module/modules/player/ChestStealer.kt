@@ -19,19 +19,21 @@ import kotlin.concurrent.thread
 object ChestStealer : Module("ChestStealer","", Category.Player) {
 
     val isSilence  = booleanSetting("isSilence","isSilence",true)
+    val isAutoClose = booleanSetting("isAutoClose","isAutoClose",true)
     var isStealing = false
+    var hide = false
 
     override fun onTick() {
         if (!isStealing){
-            if (MinecraftClient.getInstance().currentScreen is HandledScreen<*>) {
-                val screen = MinecraftClient.getInstance().currentScreen as HandledScreen<*>
-                if (MinecraftClient.getInstance().currentScreen !is InventoryScreen && screen !is CreativeInventoryScreen) {
-                    if (screen.screenHandler.type == ScreenHandlerType.GENERIC_9X6 || screen.screenHandler.type == ScreenHandlerType.GENERIC_9X3){
-                        stealer()
-                    }
+            if (isChestScreen()) {
+                hide = true
+                stealer()
+            }
 
-
-                }
+        }else{
+            if (!isChestScreen()){
+                isStealing = false
+                hide = false
             }
 
         }
@@ -51,19 +53,23 @@ object ChestStealer : Module("ChestStealer","", Category.Player) {
                 if (screen.screenHandler.type == ScreenHandlerType.GENERIC_9X6 || screen.screenHandler.type == ScreenHandlerType.GENERIC_9X3){
                     val slot = screen.screenHandler.slots
                     val player = MinecraftClient.getInstance().player
-                    thread {
+                    Thread {
                         slot.filter {
                         it.inventory != player?.inventory
-                    }.forEach { s ->
-                        if (s.stack != ItemStack.EMPTY) {
-                            clickSlot(screen.screenHandler.syncId,s.index,0,SlotActionType.QUICK_MOVE)
+                    }.filter { it.stack != ItemStack.EMPTY}
+                            .forEach { s ->
                             Thread.sleep(100L)
+                            clickSlot(screen.screenHandler.syncId,s.index,0,SlotActionType.QUICK_MOVE)
                             //screen.screenHandler.onSlotClick(s.index,0, SlotActionType.PICKUP,player)
-
+                    }.apply {
+                            if (isAutoClose.value){
+                                screen.screenHandler.onClosed(MinecraftClient.getInstance().player)
+                                MinecraftClient.getInstance().currentScreen = null
+                            }
+                                isStealing = false
+                                hide = false
                         }
-                            isStealing = false
 
-                    }
                     }.start()
                 }
 
@@ -73,6 +79,21 @@ object ChestStealer : Module("ChestStealer","", Category.Player) {
 
     }
 
+    fun isChestScreen(): Boolean {
+        if (MinecraftClient.getInstance().currentScreen is HandledScreen<*>) {
+            val screen = MinecraftClient.getInstance().currentScreen as HandledScreen<*>
+            if (MinecraftClient.getInstance().currentScreen !is InventoryScreen && screen !is CreativeInventoryScreen) {
+                if (screen.screenHandler.type == ScreenHandlerType.GENERIC_9X6
+                    || screen.screenHandler.type == ScreenHandlerType.GENERIC_9X3
+                    ){
+                    return true
+                }
+
+
+            }
+        }
+        return false
+    }
 
     fun clickSlot(screenId : Int,slotId : Int,button : Int,action : SlotActionType){
         val screenHandler = MinecraftClient.getInstance().currentScreen as HandledScreen<*>
