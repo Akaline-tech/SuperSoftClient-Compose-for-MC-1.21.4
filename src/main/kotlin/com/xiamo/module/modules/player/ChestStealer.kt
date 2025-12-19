@@ -188,7 +188,7 @@ object isDynamicIsland{
     fun register(syncId : Int){
         list.clear()
         containerList.clear()
-        NotificationManager.notifies.add(Notify("ChestStealing","正在盗取",-1,{
+        NotificationManager.notifies.add(Notify("ChestStealing","ChestStealing",-1,{
             val screen = MinecraftClient.getInstance().currentScreen as HandledScreen<*>
             if (screen.screenHandler.syncId == syncId) {
                 screen.screenHandler.slots.filter { it.inventory != MinecraftClient.getInstance().player?.inventory }.sortedBy { it.index }.forEach { slot ->
@@ -210,16 +210,11 @@ object isDynamicIsland{
                             isClosed.value = true
                         }
                     )
-
-
-
                     val itemOutFloat = animateFloatAsState(
                         if (isClosed.value) 1f else 0f, tween(durationMillis = 100)
                     )
-
                    Box(modifier = modifier) {
                        if (slot.stack != ItemStack.EMPTY) {
-
                            Box(modifier = Modifier.fillMaxSize().scale(float.value).alpha(float.value)){
                                ItemIconView(slot.stack)
                            }

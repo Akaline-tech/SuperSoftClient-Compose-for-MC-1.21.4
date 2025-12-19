@@ -67,7 +67,7 @@ object DynamicIsland : ComposeModule("DynamicIsland","灵动岛") {
                 .background(Color.Black, shape = RoundedCornerShape(10.dp))
                 .animateContentSize()
                 .padding(horizontal = 10.dp)
-                .padding(vertical = 5.dp)
+                .padding(vertical = 5.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
 
             ) {
                 if (NotificationManager.notifies.count() == 0) {

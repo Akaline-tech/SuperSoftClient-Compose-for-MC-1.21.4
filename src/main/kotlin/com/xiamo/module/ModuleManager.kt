@@ -15,6 +15,7 @@ import com.xiamo.module.modules.render.Hud
 import com.xiamo.module.modules.render.KeyboradHud
 import com.xiamo.module.modules.render.Lyric
 import com.xiamo.module.modules.render.NameTags
+import com.xiamo.module.modules.render.PlayerList
 import java.util.concurrent.CopyOnWriteArrayList
 
 object ModuleManager {
@@ -37,6 +38,7 @@ object ModuleManager {
         modules.add(KeyboradHud)
         modules.add(NameTags)
         modules.add(ChestStealer)
+        modules.add(PlayerList)
 
 
 

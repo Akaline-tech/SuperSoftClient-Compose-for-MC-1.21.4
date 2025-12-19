@@ -2,6 +2,7 @@ package com.xiamo.mixin;
 
 import com.xiamo.event.RenderEvent;
 import com.xiamo.module.modules.render.EffectHud;
+import com.xiamo.module.modules.render.PlayerList;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
@@ -24,6 +25,15 @@ public class MixinGameHud {
             EffectHud.INSTANCE.getTickCounter().setValue(tickCounter.getTickDelta(true));
             ci.cancel();
         }
+    }
+
+
+    @Inject(method = "renderPlayerList",at = @At("HEAD"), cancellable = true)
+    private void hookPlayerList(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci){
+        if (PlayerList.INSTANCE.getEnabled()){
+            ci.cancel();
+        }
+
     }
 
 }
