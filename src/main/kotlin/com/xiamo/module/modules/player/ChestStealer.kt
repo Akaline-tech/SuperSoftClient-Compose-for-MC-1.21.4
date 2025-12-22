@@ -211,7 +211,7 @@ object isDynamicIsland{
                         }
                     )
                     val itemOutFloat = animateFloatAsState(
-                        if (isClosed.value) 1f else 0f, tween(durationMillis = 100)
+                        if (isClosed.value) 1f else 0f, tween(durationMillis = 80)
                     )
                    Box(modifier = modifier) {
                        if (slot.stack != ItemStack.EMPTY) {

@@ -2,6 +2,7 @@ package com.xiamo.module.modules.render
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -41,6 +42,8 @@ import net.minecraft.client.MinecraftClient
 object DynamicIsland : ComposeModule("DynamicIsland","灵动岛") {
 
     var defaultTitle = mutableStateOf("SuperSoft 🙂 FPS：{fps}")
+    var color = mutableStateOf(Color.Black)
+
 
     init {
         this.enabled = true
@@ -55,6 +58,7 @@ object DynamicIsland : ComposeModule("DynamicIsland","灵动岛") {
     @Composable
     override fun renderCompose() {
         var fps by remember { mutableStateOf(MinecraftClient.getInstance().currentFps) }
+        val bgColor by animateColorAsState(targetValue = color.value)
         LaunchedEffect(Unit) {
             while (true) {
                 fps=MinecraftClient.getInstance().currentFps
@@ -66,7 +70,7 @@ object DynamicIsland : ComposeModule("DynamicIsland","灵动岛") {
                 .zIndex(10f)
                 .padding(top=16.dp)
                 .shadow(elevation = 10.dp)
-                .background(Color.Black, shape = RoundedCornerShape(10.dp))
+                .background(bgColor, shape = RoundedCornerShape(10.dp))
                 .animateContentSize()
                 .padding(horizontal = 10.dp)
                 .padding(vertical = 5.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
