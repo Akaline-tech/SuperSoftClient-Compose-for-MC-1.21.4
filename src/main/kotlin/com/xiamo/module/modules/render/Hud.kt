@@ -74,7 +74,7 @@ object Hud : ComposeModule("Hud", "界面") {
             initialValue = 0f,
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(3000, easing = LinearEasing), // 3秒转一圈
+                animation = tween(3000, easing = LinearEasing), // 3秒转一圈 LinearEasing会好点？
                 repeatMode = RepeatMode.Restart
             ),
             label = "hue"
