@@ -53,17 +53,120 @@ import com.xiamo.gui.hud.HudEditorManager
 import com.xiamo.module.ComposeModule
 import com.xiamo.module.ModuleManager
 import com.xiamo.module.modules.combat.KillAura
+import com.xiamo.setting.BooleanSetting
+import com.xiamo.setting.ColorSetting
 import com.xiamo.setting.ModeSetting
+import com.xiamo.setting.NumberSetting
 import com.xiamo.setting.StringSetting
 import net.minecraft.client.MinecraftClient
+import kotlin.math.sin
 import kotlin.random.Random
 
 object Hud : ComposeModule("Hud", "界面") {
     var title = StringSetting("Title", "HUD标题", "SuperSoft")
 
+
+    val colorMode = ModeSetting("ColorMode", "颜色模式", "Rainbow", listOf("Rainbow", "Static", "Fade", "Gradient", "Wave"))
+
+
+    val rainbowSpeed = NumberSetting("RainbowSpeed", "彩虹速度", 3.0, 0.5, 10.0, 0.5)
+    val rainbowSaturation = NumberSetting("RainbowSaturation", "彩虹饱和度", 0.6, 0.1, 1.0, 0.05)
+    val rainbowBrightness = NumberSetting("RainbowBrightness", "彩虹亮度", 1.0, 0.3, 1.0, 0.05)
+    val rainbowOffset = NumberSetting("RainbowOffset", "彩虹偏移", 0.05, 0.01, 0.2, 0.01)
+
+
+    val staticColor = ColorSetting("StaticColor", "静态颜色", 0xFF6C63FF.toInt())
+
+
+    val gradientStartColor = ColorSetting("GradientStart", "渐变起始色", 0xFF6C63FF.toInt())
+    val gradientEndColor = ColorSetting("GradientEnd", "渐变结束色", 0xFFFF6B6B.toInt())
+
+
+    val waveSpeed = NumberSetting("WaveSpeed", "波浪速度", 2.0, 0.5, 5.0, 0.5)
+    val waveColor = ColorSetting("WaveColor", "波浪颜色", 0xFF00BFFF.toInt())
+
+
+    val showBackground = BooleanSetting("ShowBackground", "显示背景", true)
+    val backgroundOpacity = NumberSetting("BackgroundOpacity", "背景透明度", 0.6, 0.0, 1.0, 0.1)
+
     init {
         this.enabled = true
         this.settings.add(title)
+        this.settings.add(colorMode)
+
+
+        rainbowSpeed.dependency = { colorMode.value == "Rainbow" }
+        rainbowSaturation.dependency = { colorMode.value == "Rainbow" }
+        rainbowBrightness.dependency = { colorMode.value == "Rainbow" }
+        rainbowOffset.dependency = { colorMode.value == "Rainbow" }
+        this.settings.add(rainbowSpeed)
+        this.settings.add(rainbowSaturation)
+        this.settings.add(rainbowBrightness)
+        this.settings.add(rainbowOffset)
+
+
+        staticColor.dependency = { colorMode.value == "Static" }
+        this.settings.add(staticColor)
+
+
+        gradientStartColor.dependency = { colorMode.value == "Gradient" }
+        gradientEndColor.dependency = { colorMode.value == "Gradient" }
+        this.settings.add(gradientStartColor)
+        this.settings.add(gradientEndColor)
+
+        waveSpeed.dependency = { colorMode.value == "Wave" }
+        waveColor.dependency = { colorMode.value == "Wave" }
+        this.settings.add(waveSpeed)
+        this.settings.add(waveColor)
+
+        this.settings.add(showBackground)
+        backgroundOpacity.dependency = { showBackground.value }
+        this.settings.add(backgroundOpacity)
+    }
+
+
+    @Composable
+    private fun getModuleColor(index: Int, totalModules: Int, hueOffset: Float, timeMs: Long): Color {
+        return when (colorMode.value) {
+            "Rainbow" -> {
+                val currentHue = (hueOffset + index * rainbowOffset.floatValue) % 1f
+                Color.hsv(
+                    currentHue * 360f,
+                    rainbowSaturation.floatValue,
+                    rainbowBrightness.floatValue
+                )
+            }
+            "Static" -> {
+                Color(staticColor.value)
+            }
+            "Fade" -> {
+                val alpha = (sin(timeMs / 1000.0 + index * 0.3) * 0.3 + 0.7).toFloat()
+                Color.White.copy(alpha = alpha.coerceIn(0.4f, 1f))
+            }
+            "Gradient" -> {
+                val fraction = if (totalModules > 1) index.toFloat() / (totalModules - 1) else 0f
+                lerpColor(Color(gradientStartColor.value), Color(gradientEndColor.value), fraction)
+            }
+            "Wave" -> {
+                val wave = (sin(timeMs / (500.0 / waveSpeed.value) + index * 0.5) * 0.3 + 0.7).toFloat()
+                val baseColor = Color(waveColor.value)
+                baseColor.copy(
+                    red = (baseColor.red * wave).coerceIn(0f, 1f),
+                    green = (baseColor.green * wave).coerceIn(0f, 1f),
+                    blue = (baseColor.blue * wave).coerceIn(0f, 1f)
+                )
+            }
+            else -> Color.White
+        }
+    }
+
+    private fun lerpColor(start: Color, end: Color, fraction: Float): Color {
+        return Color(
+            red = start.red + (end.red - start.red) * fraction,
+            green = start.green + (end.green - start.green) * fraction,
+            blue = start.blue + (end.blue - start.blue) * fraction,
+            alpha = start.alpha + (end.alpha - start.alpha) * fraction
+        )
     }
 
     @Composable
@@ -76,14 +179,21 @@ object Hud : ComposeModule("Hud", "界面") {
             initialValue = 0f,
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(3000, easing = LinearEasing), // 3秒转一圈 LinearEasing会好点？
+                animation = tween((3000 / rainbowSpeed.value).toInt(), easing = LinearEasing),
                 repeatMode = RepeatMode.Restart
             ),
             label = "hue"
         )
 
-        Box(Modifier.fillMaxSize()) {
+        var timeMs by remember { mutableStateOf(0L) }
+        LaunchedEffect(Unit) {
+            while (true) {
+                timeMs = System.currentTimeMillis()
+                kotlinx.coroutines.delay(16)
+            }
+        }
 
+        Box(Modifier.fillMaxSize()) {
 
             com.xiamo.gui.hud.HudComponent(
                 componentId = "hud_title",
@@ -106,40 +216,47 @@ object Hud : ComposeModule("Hud", "界面") {
                 }
             }
 
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
-                    LazyColumn(horizontalAlignment = Alignment.End, modifier = Modifier.width(200.dp)) {
-                        val enabledModules = ModuleManager.modules.filter { it.enabled }.sortedByDescending { module ->
-                            val mode = module.settings.filterIsInstance<ModeSetting>().firstOrNull()?.value
-                            val displayName = if (mode != null) "${module.name} | $mode" else module.name
-                            textMeasurer.measure(displayName, style = TextStyle(textAlign = TextAlign.Right, fontSize = 8.sp)).size.width
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopEnd) {
+                LazyColumn(horizontalAlignment = Alignment.End, modifier = Modifier.width(200.dp)) {
+                    val enabledModules = ModuleManager.modules.filter { it.enabled }.sortedByDescending { module ->
+                        val mode = module.settings.filterIsInstance<ModeSetting>().firstOrNull()?.value
+                        val displayName = if (mode != null) "${module.name} | $mode" else module.name
+                        textMeasurer.measure(displayName, style = TextStyle(textAlign = TextAlign.Right, fontSize = 8.sp)).size.width
+                    }
 
+                    itemsIndexed(enabledModules) { index, module ->
+                        val moduleColor = getModuleColor(index, enabledModules.size, hueOffset, timeMs)
+                        val args = module.settings.filterIsInstance(ModeSetting::class.java).firstOrNull()?.value
+
+                        val backgroundModifier = if (showBackground.value) {
+                            Modifier.background(
+                                Color(0f, 0f, 0f, backgroundOpacity.floatValue),
+                                RoundedCornerShape(2.dp)
+                            )
+                        } else {
+                            Modifier
                         }
-                        itemsIndexed(enabledModules) { index, module ->
-                            val currentHue = (hueOffset + index * 0.05f) % 1f
-                            val rainbowColor = Color.hsv(currentHue * 360f, 0.6f, 1f)
-                            val args = module.settings.filterIsInstance(ModeSetting::class.java).firstOrNull()?.value
 
-                            Text(
-                                text = module.name + (if (args == null) "" else " | $args"),
-                                fontSize = 8.sp,
-                                color = rainbowColor,
-                                modifier = Modifier
-                                    .background(Color(0f, 0f, 0f, 0.6f), RoundedCornerShape(2.dp))
-                                    .padding(horizontal = 4.dp, vertical = 2.dp)
-                                    .animateContentSize()
-                                    .animateItem(placementSpec = spring(stiffness = Spring.StiffnessLow)),
-                                textAlign = TextAlign.Right,
-                                style = TextStyle(
-                                    shadow = androidx.compose.ui.graphics.Shadow(
-                                        Color.Black,
-                                        offset = Offset(1f, 1f),
-                                        blurRadius = 5f
-                                    )
+                        Text(
+                            text = module.name + (if (args == null) "" else " | $args"),
+                            fontSize = 8.sp,
+                            color = moduleColor,
+                            modifier = backgroundModifier
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                                .animateContentSize()
+                                .animateItem(placementSpec = spring(stiffness = Spring.StiffnessLow)),
+                            textAlign = TextAlign.Right,
+                            style = TextStyle(
+                                shadow = androidx.compose.ui.graphics.Shadow(
+                                    Color.Black,
+                                    offset = Offset(1f, 1f),
+                                    blurRadius = 5f
                                 )
                             )
-                        }
+                        )
                     }
                 }
+            }
 
             AnimatedVisibility(
                 visible = KillAura.isAttacking.value || HudEditorManager.isEditMode,
@@ -268,6 +385,7 @@ object Hud : ComposeModule("Hud", "界面") {
                     }
                 }
 
+            }
         }
-    } }
+    }
 }

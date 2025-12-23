@@ -28,8 +28,9 @@ fun HudComponent(
     defaultY: Float = 0f,
     content: @Composable () -> Unit
 ) {
-
-
+    val mc = MinecraftClient.getInstance()
+    val windowWidth = mc.window.width.toFloat()
+    val windowHeight = mc.window.height.toFloat()
 
     val isEditMode = HudEditorManager.isEditMode
 
@@ -37,12 +38,16 @@ fun HudComponent(
         HudEditorManager.getOrCreateComponent(componentId, moduleName)
     }
 
-
     LaunchedEffect(componentId, moduleName) {
         val (savedX, savedY) = HudEditorManager.loadComponentPosition(componentId, moduleName, defaultX, defaultY)
         componentData.x = savedX
         componentData.y = savedY
     }
+
+
+    val displayX = componentData.x.coerceIn(0f, (windowWidth - componentData.width).coerceAtLeast(0f))
+    val displayY = componentData.y.coerceIn(0f, (windowHeight - componentData.height).coerceAtLeast(0f))
+
     val isSelected = HudEditorManager.isSelected(componentData)
 
     val borderAlpha by animateFloatAsState(
@@ -54,8 +59,8 @@ fun HudComponent(
         modifier = Modifier
             .offset {
                 IntOffset(
-                    (componentData.x).toInt(),
-                    (componentData.y).toInt()
+                    displayX.toInt(),
+                    displayY.toInt()
                 )
             }
             .then(

@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.xiamo.alt.AltManagerScreen
 import com.xiamo.gui.ComposeScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -111,6 +112,7 @@ class TitleScreen : ComposeScreen(Text.of("Title Screen")) {
                     Column(modifier = Modifier.padding(top = 20.dp).fillMaxWidth(),horizontalAlignment = Alignment.CenterHorizontally) {
                         MenuButton("SinglePlay") { MinecraftClient.getInstance().setScreen(SelectWorldScreen(this@TitleScreen)) }
                         MenuButton("Multiplayer") { MinecraftClient.getInstance().setScreen(MultiplayerScreen(this@TitleScreen)) }
+                        MenuButton("Alt Manager") { MinecraftClient.getInstance().setScreen(AltManagerScreen()) }
                         MenuButton("Option") { MinecraftClient.getInstance().setScreen(OptionsScreen(this@TitleScreen, MinecraftClient.getInstance().options)) }
                         MenuButton("Quit Game") { MinecraftClient.getInstance().scheduleStop() }
                     }

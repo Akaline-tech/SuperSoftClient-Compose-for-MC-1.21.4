@@ -1,7 +1,9 @@
 package com.xiamo
 
+import com.xiamo.alt.AltManager
 import com.xiamo.event.EvenManager
 import com.xiamo.module.ModuleManager
+import com.xiamo.utils.CoilInitializer
 import com.xiamo.utils.config.ConfigManager
 import net.fabricmc.api.ModInitializer
 import org.jetbrains.skiko.hostOs
@@ -24,7 +26,8 @@ object SuperSoft : ModInitializer {
 		EvenManager
 		ModuleManager
         ConfigManager.init()
-
+        AltManager.init()
+        CoilInitializer.init()
 
 	}
 }

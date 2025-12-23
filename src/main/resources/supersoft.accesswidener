@@ -8,4 +8,8 @@ accessible method net/minecraft/entity/Entity movementInputToVelocity (Lnet/mine
 accessible method net/minecraft/client/render/GameRenderer getFov (Lnet/minecraft/client/render/Camera;FZ)F
 accessible field net/minecraft/client/gui/hud/ChatHud messages Ljava/util/List;
 
+# AltManager - Session 相关
+accessible field net/minecraft/client/MinecraftClient session Lnet/minecraft/client/session/Session;
+mutable field net/minecraft/client/MinecraftClient session Lnet/minecraft/client/session/Session;
+
 
