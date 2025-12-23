@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.xiamo.module.Category
 import com.xiamo.module.Module
 import com.xiamo.notification.NotificationManager
@@ -107,22 +108,26 @@ object PlayerList : Module("PlayerList", "Show online players", Category.Render)
             getPlayerName(entry)
         }
 
-        Row {
+        Row(horizontalArrangement = Arrangement.Center,verticalAlignment = Alignment.CenterVertically) {
+
+            AsyncImage( //这个不知道好不好用
+                model = "https://minotar.net/avatar/${entry.profile.name}/28", contentDescription = null,
+            )
             Text(
                 text = displayNameText.toAnnotatedString(),
                 fontSize = fontSize.value.sp,
                 modifier = Modifier.padding(horizontal = 2.dp)
             )
             Canvas(modifier = Modifier.size(width = 10.dp, height = 8.dp)){
-                drawRect(Color.Green,size = Size(1.dp.toPx(),1.dp.toPx()),topLeft = Offset(1.dp.toPx(), 7.dp.toPx()))
+                drawRect(Color.Green,size = Size(1.dp.toPx(),1.dp.toPx()),topLeft = Offset(1.dp.toPx(), 6.dp.toPx()))
                 if (entry.latency > 1000) return@Canvas
-                drawRect(Color.Green,size = Size(1.dp.toPx(),2.dp.toPx()),topLeft = Offset(2.5.dp.toPx(), 6.dp.toPx()))
+                drawRect(Color.Green,size = Size(1.dp.toPx(),2.dp.toPx()),topLeft = Offset(2.5.dp.toPx(), 5.dp.toPx()))
                 if (entry.latency > 600) return@Canvas
-                drawRect(Color.Green,size = Size(1.dp.toPx(),3.dp.toPx()),topLeft = Offset(4.dp.toPx(), 5.dp.toPx()))
+                drawRect(Color.Green,size = Size(1.dp.toPx(),3.dp.toPx()),topLeft = Offset(4.dp.toPx(), 4.dp.toPx()))
                 if (entry.latency > 300) return@Canvas
-                drawRect(Color.Green,size = Size(1.dp.toPx(),4.dp.toPx()),topLeft = Offset(5.5.dp.toPx(), 4.dp.toPx()))
+                drawRect(Color.Green,size = Size(1.dp.toPx(),4.dp.toPx()),topLeft = Offset(5.5.dp.toPx(), 3.dp.toPx()))
                 if (entry.latency > 150) return@Canvas
-                drawRect(Color.Green,size = Size(1.dp.toPx(),5.dp.toPx()),topLeft = Offset(7.dp.toPx(), 3.dp.toPx()))
+                drawRect(Color.Green,size = Size(1.dp.toPx(),5.dp.toPx()),topLeft = Offset(7.dp.toPx(), 2.dp.toPx()))
             }
         }
 

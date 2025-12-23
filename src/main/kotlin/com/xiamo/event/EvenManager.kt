@@ -5,6 +5,7 @@ import com.xiamo.SuperSoft
 import com.xiamo.gui.titleScreen.TitleScreen
 import com.xiamo.module.ModuleManager
 import com.xiamo.utils.rotation.RotationManager
+import com.xiamo.module.modules.render.KeyboradHud
 import net.minecraft.client.MinecraftClient
 import org.lwjgl.glfw.GLFW
 
@@ -33,7 +34,9 @@ object  EvenManager {
         ModuleManager.modules.filter { it.enabled }.forEach {
             it.onMouseClicked(event.mouseX,event.mouseY)
         }
-
+        if (KeyboradHud.enabled) {
+            KeyboradHud.onMouseButton(event.button, 1)
+        }
     }
 
     @EventTarget
@@ -41,7 +44,9 @@ object  EvenManager {
         ModuleManager.modules.filter { it.enabled }.forEach {
             it.onMouseReleased(event.mouseX,event.mouseY)
         }
-
+        if (KeyboradHud.enabled) {
+            KeyboradHud.onMouseButton(event.button, 0)
+        }
     }
 
     @EventTarget

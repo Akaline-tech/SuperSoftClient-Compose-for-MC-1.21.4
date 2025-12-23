@@ -291,8 +291,7 @@ object Hud : ComposeModule("Hud", "界面") {
                                     animationSpec = tween(durationMillis = 300),
                                     label = "health"
                                 )
-
-                                val targetHead = "https://mc-heads.net/avatar/$targetName/64"
+                                val targetHead = "https://minotar.net/avatar/$targetName/64"
 
                                 val delayedHealthPercent = remember { mutableStateOf(healthPercent) }
                                 LaunchedEffect(healthPercent) {

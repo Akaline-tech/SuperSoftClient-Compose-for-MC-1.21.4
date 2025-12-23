@@ -180,6 +180,14 @@ class ClickGuiScreen(val parentScreen: Screen? = null) : ComposeScreen(Text.of("
         return super.mouseReleased(mouseX, mouseY, button)
     }
 
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+        if (HudEditorManager.isEditMode && HudEditorManager.selectedComponent != null) {
+            HudEditorManager.onScroll(verticalAmount)
+            return true
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
+    }
+
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
         if (keyCode == 256) {
             if (HudEditorManager.isEditMode) {

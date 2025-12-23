@@ -27,15 +27,12 @@ public class MixinMouse{
     private void onClick(long window, int button, int action, int mods, CallbackInfo ci){
         switch (action){
             case GLFW.GLFW_PRESS -> {
-                new MouseClickedEvent((int)x,(int)y).broadcast();
+                new MouseClickedEvent((int)x,(int)y, button).broadcast();
             }
             case GLFW.GLFW_RELEASE -> {
-                new MouseReleasedEvent((int)x,(int)y).broadcast();
-
+                new MouseReleasedEvent((int)x,(int)y, button).broadcast();
             }
         }
-
-
     }
 
 }

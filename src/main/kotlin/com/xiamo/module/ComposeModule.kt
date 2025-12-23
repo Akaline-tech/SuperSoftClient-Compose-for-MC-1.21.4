@@ -57,11 +57,6 @@ open class ComposeModule(name : String, description : String) : Module(name,desc
     var composeScene : ComposeScene? = null
 
 
-    private val componentPositions = mutableMapOf<String, Pair<Float, Float>>()
-
-
-
-
     private fun closeSkiaResources() {
         skiaContext?.close()
         renderTarget?.close()
@@ -190,47 +185,52 @@ open class ComposeModule(name : String, description : String) : Module(name,desc
         super.onKey(keyCode, keyState,scanCode)
     }
 
-    fun saveComponentPositions(positions: Map<String, Pair<Float, Float>>) {
-        componentPositions.clear()
-        componentPositions.putAll(positions)
-        positions.forEach { (componentId, pos) ->
+    fun saveComponentPositions(positions: Map<String, com.xiamo.gui.hud.ComponentPositionData>) {
+        positions.forEach { (componentId, posData) ->
             val xKey = "Component_${componentId}_X"
             val yKey = "Component_${componentId}_Y"
-
+            val scaleKey = "Component_${componentId}_Scale"
 
             var xSetting = settings.find { it.name == xKey } as? com.xiamo.setting.NumberSetting
             var ySetting = settings.find { it.name == yKey } as? com.xiamo.setting.NumberSetting
+            var scaleSetting = settings.find { it.name == scaleKey } as? com.xiamo.setting.NumberSetting
 
             if (xSetting == null) {
-                xSetting = numberSetting(xKey, "Component $componentId X", pos.first.toDouble(), -10000.0, 10000.0, 1.0)
+                xSetting = numberSetting(xKey, "Component $componentId X", posData.x.toDouble(), -10000.0, 10000.0, 1.0)
                 xSetting.visible = false
             } else {
-                xSetting.value = pos.first.toDouble()
+                xSetting.value = posData.x.toDouble()
             }
 
             if (ySetting == null) {
-                ySetting = numberSetting(yKey, "Component $componentId Y", pos.second.toDouble(), -10000.0, 10000.0, 1.0)
+                ySetting = numberSetting(yKey, "Component $componentId Y", posData.y.toDouble(), -10000.0, 10000.0, 1.0)
                 ySetting.visible = false
             } else {
-                ySetting.value = pos.second.toDouble()
+                ySetting.value = posData.y.toDouble()
+            }
+
+            if (scaleSetting == null) {
+                scaleSetting = numberSetting(scaleKey, "Component $componentId Scale", posData.scale.toDouble(), 0.5, 2.0, 0.1)
+                scaleSetting.visible = false
+            } else {
+                scaleSetting.value = posData.scale.toDouble()
             }
         }
         com.xiamo.utils.config.ConfigManager.saveModule(this)
     }
 
-    fun loadComponentPosition(componentId: String, defaultX: Float, defaultY: Float): Pair<Float, Float> {
-        val componentX = numberSetting("Component_${componentId}_X","组件位置",defaultX.toDouble(),0.0, 2000.0,.0)
-        val componentY = numberSetting("Component_${componentId}_Y","组件位置",defaultY.toDouble(),0.0,2000.0)
+    fun loadComponentPosition(componentId: String, defaultX: Float, defaultY: Float, defaultScale: Float = 1f): com.xiamo.gui.hud.ComponentPositionData {
+        val componentX = numberSetting("Component_${componentId}_X","组件位置",defaultX.toDouble(),-10000.0, 10000.0, 1.0)
+        val componentY = numberSetting("Component_${componentId}_Y","组件位置",defaultY.toDouble(),-10000.0, 10000.0, 1.0)
+        val componentScale = numberSetting("Component_${componentId}_Scale","组件缩放",defaultScale.toDouble(),0.5, 2.0, 0.1)
+        componentX.visible = false
+        componentY.visible = false
+        componentScale.visible = false
         ConfigManager.load()
-        componentPositions[componentId]?.let { return it }
         val x = componentX.value.toFloat()
         val y = componentY.value.toFloat()
-
-
-
-        val position = Pair(x, y)
-        componentPositions[componentId] = position
-        return position
+        val scale = componentScale.value.toFloat()
+        return com.xiamo.gui.hud.ComponentPositionData(x, y, scale)
     }
 
 

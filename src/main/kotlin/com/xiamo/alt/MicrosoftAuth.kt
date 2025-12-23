@@ -18,7 +18,7 @@ import java.net.URL
 
 /**
  * 微软 OAuth 认证
- * 使用 Device Code Flow 实现
+ * 使用 Device Code Flow 实现   打滑水影的
  */
 object MicrosoftAuth {
 

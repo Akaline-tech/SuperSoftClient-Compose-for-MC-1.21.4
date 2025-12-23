@@ -8,6 +8,8 @@ import com.xiamo.module.ComposeModule
 import com.xiamo.module.ModuleManager
 import com.xiamo.utils.config.ConfigManager
 
+data class ComponentPositionData(val x: Float, val y: Float, val scale: Float)
+
 object HudEditorManager {
     var isEditMode by mutableStateOf(false)
     var selectedComponent by mutableStateOf<HudComponentData?>(null)
@@ -43,12 +45,18 @@ object HudEditorManager {
         return components.values.toList()
     }
 
+    fun onScroll(delta: Double) {
+        if (isEditMode && selectedComponent != null) {
+            selectedComponent?.adjustScale(delta.toFloat() * 0.1f)
+        }
+    }
+
     fun saveAllPositions() {
-        val positionsMap = mutableMapOf<String, MutableMap<String, Pair<Float, Float>>>()
+        val positionsMap = mutableMapOf<String, MutableMap<String, ComponentPositionData>>()
 
         components.values.forEach { component ->
             val moduleMap = positionsMap.getOrPut(component.parentModuleName) { mutableMapOf() }
-            moduleMap[component.id] = Pair(component.x, component.y)
+            moduleMap[component.id] = ComponentPositionData(component.x, component.y, component.scale)
         }
 
         positionsMap.forEach { (moduleName, positions) ->
@@ -60,12 +68,12 @@ object HudEditorManager {
         }
     }
 
-    fun loadComponentPosition(componentId: String, moduleName: String, defaultX: Float, defaultY: Float): Pair<Float, Float> {
+    fun loadComponentPosition(componentId: String, moduleName: String, defaultX: Float, defaultY: Float, defaultScale: Float = 1f): ComponentPositionData {
         val module = com.xiamo.module.ModuleManager.modules.find { it.name == moduleName }
         if (module is com.xiamo.module.ComposeModule) {
-            return module.loadComponentPosition(componentId, defaultX, defaultY)
+            return module.loadComponentPosition(componentId, defaultX, defaultY, defaultScale)
         }
-        return Pair(defaultX, defaultY)
+        return ComponentPositionData(defaultX, defaultY, defaultScale)
     }
 
 

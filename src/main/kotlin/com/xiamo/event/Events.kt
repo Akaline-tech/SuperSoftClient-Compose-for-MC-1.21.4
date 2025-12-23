@@ -21,8 +21,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 class RenderEvent(val drawContext: DrawContext) : Event(){}
 
 
-class MouseClickedEvent(val mouseX : Int,val mouseY : Int): Event(){}
-class MouseReleasedEvent(val mouseX : Int,val mouseY : Int): Event(){}
+class MouseClickedEvent(val mouseX : Int,val mouseY : Int, val button: Int = 0): Event(){}
+class MouseReleasedEvent(val mouseX : Int,val mouseY : Int, val button: Int = 0): Event(){}
 
 
 
