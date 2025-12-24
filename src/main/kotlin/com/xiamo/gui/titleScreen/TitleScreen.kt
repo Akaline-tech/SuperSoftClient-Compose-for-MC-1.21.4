@@ -10,7 +10,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -18,11 +21,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,13 +40,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.decodeToImageBitmap
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.xiamo.SuperSoft
 import com.xiamo.alt.AltManagerScreen
 import com.xiamo.gui.ComposeScreen
 import kotlinx.coroutines.delay
@@ -85,6 +93,12 @@ class TitleScreen : ComposeScreen(Text.of("Title Screen")) {
                     t++
                 }
             }
+            SuperSoft.javaClass.getResourceAsStream("/assets/supersoft/background.jpg")?.let {
+                Image(it.readAllBytes().decodeToImageBitmap(),
+                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = null)
+            }
+
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 particles.forEach { p ->
@@ -103,7 +117,7 @@ class TitleScreen : ComposeScreen(Text.of("Title Screen")) {
             }
             AnimatedVisibility(isVisiable,
                 enter = fadeIn(tween(500))+ scaleIn(tween(500, easing = FastOutSlowInEasing)) + expandVertically(tween(500)),exit = fadeOut()+ scaleOut()) {
-                Column(modifier = Modifier.padding(top = 50.dp).align(Alignment.TopCenter)) {
+                Column(modifier = Modifier.scale(0.5f).align(Alignment.Center)) {
                     Text(
                         "SuperSoft Client", fontSize = 30.sp, color = Color.White, style = TextStyle(shadow = androidx.compose.ui.graphics.Shadow(
                             Color.Yellow, offset = Offset(1f,1f), blurRadius = 5f
@@ -146,29 +160,18 @@ fun MenuButton(
     text: String,
     onClick: () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val strokeWidth by animateFloatAsState(if (isHovered) 4f else 8f)
-    Button(
-        onClick = onClick,
+    Surface(
         modifier = Modifier
+            .padding(5.dp)
             .width(200.dp)
-            .hoverable(interactionSource)
-            .drawBehind {
-                drawLine(
-                    color = Color.Blue,
-                    start = Offset(0f, size.height - 5.dp.toPx()),
-                    end = Offset(size.width, size.height - 5.dp.toPx()),
-                    strokeWidth = strokeWidth
-                )
-            },
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Black,
-            contentColor = Color.White
-        ),
-        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
-        interactionSource = interactionSource
+            .height(40.dp)
+            .clickable(onClick = onClick),
+        color = Color.Black.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(8.dp)
     ) {
-        Text(text)
+        Box(contentAlignment = Alignment.Center) {
+            Text(text, color = Color.White)
+        }
     }
 }
+

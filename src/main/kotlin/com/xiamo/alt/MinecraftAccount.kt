@@ -67,7 +67,7 @@ data class MinecraftAccount(
      * 获取头像 URL
      */
     fun getHeadUrl(size: Int = 64): String {
-        return "https://mc-heads.net/avatar/$username/$size"
+        return "https://minotar.net/avatar/$username/$size"
     }
 
     /**

@@ -617,7 +617,7 @@ private fun CurrentAccountTab(onAdd: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = "https://mc-heads.net/avatar/${AltManager.getCurrentUsername()}/16",
+                model = "https://minotar.net/avatar/${AltManager.getCurrentUsername()}/16",
                 contentDescription = null,
                 modifier = Modifier.size(16.dp).clip(RoundedCornerShape(2.dp))
             )
