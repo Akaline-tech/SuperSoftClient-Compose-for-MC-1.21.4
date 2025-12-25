@@ -51,7 +51,7 @@ object KeyboradHud : ComposeModule("KeyboardHud", "键盘可视化") {
     private val showSprint = booleanSetting("ShowSprint", "显示疾跑键", false)
     private val showMouse = booleanSetting("ShowMouse", "显示鼠标按键", false)
 
-    private val styleMode = modeSetting("Style", "样式", "Modern", "Modern", "Classic", "Minimal", "Gradient")
+    private val styleMode = modeSetting("Style", "样式", "Classic", "Modern", "Classic", "Minimal", "Gradient")
 
     private val primaryColor = colorSetting("PrimaryColor", "主色调", colorToArgb(100, 180, 255))
     private val bgOpacity = numberSetting("BgOpacity", "背景透明度", 0.6, 0.0, 1.0, 0.05)

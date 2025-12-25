@@ -6,6 +6,7 @@ import com.xiamo.module.ModuleManager
 import com.xiamo.utils.CoilInitializer
 import com.xiamo.utils.config.ConfigManager
 import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import org.jetbrains.skiko.hostOs
 import org.slf4j.LoggerFactory
 
@@ -26,8 +27,11 @@ object SuperSoft : ModInitializer {
 		EvenManager
 		ModuleManager
         ConfigManager.init()
-        AltManager.init()
         CoilInitializer.init()
 
+
+		ClientLifecycleEvents.CLIENT_STARTED.register {
+			AltManager.init()
+		}
 	}
 }
