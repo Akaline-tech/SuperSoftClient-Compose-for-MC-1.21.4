@@ -3,15 +3,15 @@
 	"id": "supersoft",
 	"version": "${version}",
 	"name": "SuperSoft",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Jetbrain Compose on Minecraft",
 	"authors": [
-		"Me!"
+		"XiaMo"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/Xiamo-vip/SuperSoftClient-Compose-for-MC-1.21.4",
+		"sources": "https://github.com/Xiamo-vip/SuperSoftClient-Compose-for-MC-1.21.4"
 	},
-	"license": "CC0-1.0",
+	"license": "GPL-3.0",
 	"icon": "assets/supersoft/icon.png",
 	"environment": "*",
 	"entrypoints": {
