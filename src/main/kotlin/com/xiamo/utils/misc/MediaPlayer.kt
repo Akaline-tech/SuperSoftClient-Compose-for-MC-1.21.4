@@ -1,6 +1,5 @@
 package com.xiamo.utils.misc
 
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,20 +33,29 @@ object MediaPlayer : StreamPlayerListener {
     var playlist = mutableStateListOf<Song>()
     var currentIndex = mutableStateOf(0)
     var volume = mutableStateOf(1f)
+
     private var isChangingSong = false
     private var lastPlayedTick = 0
+
+
+    @Volatile
+    private var seekOffset = 0L
+
+    @Volatile
+    private var isSeeking = false
 
     fun playSound(file: File, song: Song) {
         Thread {
             isChangingSong = false
             lastPlayedTick = 0
+            seekOffset = 0L
             songFile.value = file
             player.stop()
             player.open(songFile.value)
             this.song.value = song
             player.addStreamPlayerListener(this)
             isPlaying.value = true
-            totalDuration.value = calculateDuration(file)
+            totalDuration.value = if (song.duration > 0) song.duration else calculateDuration(file)
             player.play()
         }.start()
     }
@@ -88,18 +96,27 @@ object MediaPlayer : StreamPlayerListener {
             player.stop()
             isPlaying.value = false
             tick.value = 0
+            seekOffset = 0L
         }.start()
     }
 
     fun seekTo(positionMs: Long) {
         if (songFile.value == null || totalDuration.value <= 0) return
+
+        isSeeking = true
+        seekOffset = positionMs
+        tick.value = positionMs.toInt()
+        lastPlayedTick = positionMs.toInt()
+
         Thread {
             try {
                 val targetBytes = ((positionMs.toDouble() / totalDuration.value) * player.totalBytes).toLong()
                 player.seekBytes(targetBytes)
-                tick.value = positionMs.toInt()
+                Thread.sleep(150)
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                isSeeking = false
             }
         }.start()
     }
@@ -161,8 +178,7 @@ object MediaPlayer : StreamPlayerListener {
         }
     }
 
-    override fun opened(dataSource: Any?, properties: Map<String?, Any?>?) {
-    }
+    override fun opened(dataSource: Any?, properties: Map<String?, Any?>?) {}
 
     override fun progress(
         nEncodedBytes: Int,
@@ -170,12 +186,20 @@ object MediaPlayer : StreamPlayerListener {
         pcmData: ByteArray?,
         properties: Map<String?, Any?>?
     ) {
-        tick.value = (microsecondPosition / 1000).toInt()
-        lastPlayedTick = tick.value
+        if (isSeeking) return
+
+
+        val relativeMs = (microsecondPosition / 1000)
+        val currentMs = seekOffset + relativeMs
+
+        tick.value = currentMs.toInt()
+        lastPlayedTick = currentMs.toInt()
     }
 
     override fun statusUpdated(event: StreamPlayerEvent) {
         if (event.playerStatus == Status.STOPPED || event.playerStatus == Status.PAUSED) {
+            if (isSeeking) return
+
             DynamicIsland.unregisterPermanent(MusicPlayer)
             isPlaying.value = false
             val playedEnough = lastPlayedTick > 5000 && totalDuration.value > 0 &&
@@ -184,7 +208,7 @@ object MediaPlayer : StreamPlayerListener {
                 playNext()
             }
         }
-        if (event.playerStatus == Status.PLAYING) {
+        if (event.playerStatus == Status.PLAYING || event.playerStatus == Status.RESUMED) {
             DynamicIsland.registerPermanent(MusicPlayer) {
                 Text("正在播放：" + this.song.value?.name, color = Color.White, fontSize = 6.sp)
                 AsyncImage(this.song.value?.image, modifier = Modifier.padding(start = 5.dp).size(12.dp).clip(RoundedCornerShape(1.dp)), contentDescription = null)

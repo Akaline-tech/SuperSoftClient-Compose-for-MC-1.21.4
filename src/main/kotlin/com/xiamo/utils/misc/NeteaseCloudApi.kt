@@ -325,7 +325,8 @@ object NeteaseCloudApi {
                             val picUrl = obj["picUrl"]?.jsonPrimitive?.content ?: ""
                             val artists = song["artists"]?.jsonArray
                             val singer = artists?.firstOrNull()?.jsonObject?.get("name")?.jsonPrimitive?.content ?: ""
-                            result.add(Song(name = name, image = "$picUrl?param=200y200", singer = singer, id = id))
+                            val duration = song["duration"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L
+                            result.add(Song(name = name, image = "$picUrl?param=200y200", singer = singer, id = id, duration = duration))
                         }
                     }
                 }
@@ -355,7 +356,8 @@ object NeteaseCloudApi {
                         val picUrl = album?.get("picUrl")?.jsonPrimitive?.content ?: ""
                         val artists = obj["artists"]?.jsonArray
                         val singer = artists?.firstOrNull()?.jsonObject?.get("name")?.jsonPrimitive?.content ?: ""
-                        result.add(Song(name = name, image = "$picUrl?param=200y200", singer = singer, id = id))
+                        val duration = obj["duration"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L
+                        result.add(Song(name = name, image = "$picUrl?param=200y200", singer = singer, id = id, duration = duration))
                     }
                 }
             }
@@ -412,7 +414,62 @@ object NeteaseCloudApi {
                         val picUrl = album?.get("picUrl")?.jsonPrimitive?.content ?: ""
                         val artists = obj["ar"]?.jsonArray
                         val singer = artists?.firstOrNull()?.jsonObject?.get("name")?.jsonPrimitive?.content ?: ""
-                        result.add(Song(name = name, image = "$picUrl?param=200y200", singer = singer, id = songId))
+                        val duration = obj["dt"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L
+                        result.add(Song(name = name, image = "$picUrl?param=200y200", singer = singer, id = songId, duration = duration))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return result
+    }
+
+    fun getUserLikePlaylistId(): Long? {
+        val uid = userProfile.value?.userId ?: return null
+        val request = Request.Builder()
+            .url("$url/user/playlist?uid=$uid&timestamp=${System.currentTimeMillis()}")
+            .header("Cookie", cookie.value)
+            .get()
+            .build()
+        try {
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val json = Json.parseToJsonElement(response.body.string())
+                    val playlists = json.jsonObject["playlist"]?.jsonArray
+                    if (!playlists.isNullOrEmpty()) {
+                        return playlists[0].jsonObject["id"]?.jsonPrimitive?.content?.toLongOrNull()
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
+    }
+
+    fun getPlaylistTracks(id: Long, limit: Int = 50, offset: Int = 0): List<Song> {
+        val result = mutableListOf<Song>()
+        val request = Request.Builder()
+            .url("$url/playlist/track/all?id=$id&limit=$limit&offset=$offset")
+            .header("Cookie", cookie.value)
+            .get()
+            .build()
+        try {
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val json = Json.parseToJsonElement(response.body.string())
+                    val songs = json.jsonObject["songs"]?.jsonArray
+                    songs?.forEach { item ->
+                        val obj = item.jsonObject
+                        val name = obj["name"]?.jsonPrimitive?.content ?: ""
+                        val songId = obj["id"]?.jsonPrimitive?.content?.toLong() ?: 0L
+                        val album = obj["al"]?.jsonObject
+                        val picUrl = album?.get("picUrl")?.jsonPrimitive?.content ?: ""
+                        val artists = obj["ar"]?.jsonArray
+                        val singer = artists?.firstOrNull()?.jsonObject?.get("name")?.jsonPrimitive?.content ?: ""
+                        val duration = obj["dt"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L
+                        result.add(Song(name = name, image = "$picUrl?param=200y200", singer = singer, id = songId, duration = duration))
                     }
                 }
             }
@@ -468,7 +525,8 @@ object NeteaseCloudApi {
                         val picUrl = album?.get("picUrl")?.jsonPrimitive?.content ?: ""
                         val artists = obj["ar"]?.jsonArray
                         val singer = artists?.firstOrNull()?.jsonObject?.get("name")?.jsonPrimitive?.content ?: ""
-                        result.add(Song(name = name, image = "$picUrl?param=200y200", singer = singer, id = id))
+                        val duration = obj["dt"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L
+                        result.add(Song(name = name, image = "$picUrl?param=200y200", singer = singer, id = id, duration = duration))
                     }
                 }
             }
@@ -478,11 +536,9 @@ object NeteaseCloudApi {
         return result
     }
 
-    fun getLikeSongs(): List<Song> {
-        val likeIds = getLikeList()
-        val songs = getSongDetails(likeIds)
-        val idToSong = songs.associateBy { it.id }
-        return likeIds.mapNotNull { idToSong[it] }
+    fun getLikeSongs(limit: Int = 50, offset: Int = 0): List<Song> {
+        val playlistId = getUserLikePlaylistId() ?: return emptyList()
+        return getPlaylistTracks(playlistId, limit, offset)
     }
 
     fun getFile(id: Long): SongFile {
@@ -635,7 +691,7 @@ data class SearchHot(
 )
 
 @Serializable
-data class Song(val image: String, val name: String, val singer: String, val id: Long)
+data class Song(val image: String, val name: String, val singer: String, val id: Long, val duration: Long = 0L)
 
 data class SongFile(val url: String, val size: Long)
 

@@ -10,11 +10,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.v2.ScrollbarAdapter
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -335,104 +334,120 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
             if (selectedPlaylist != null) {
                 PlaylistDetailPage(selectedPlaylist) { currentPlaylist.value = null }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    item {
-                        Text("热门歌曲", fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
+                val homeListState = rememberLazyListState()
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = homeListState,
+                        modifier = Modifier.fillMaxSize().padding(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        item {
+                            Text("热门歌曲", fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
 
-                    item {
-                        if (isLoading || newSongs.isEmpty()) {
-                            Box(modifier = Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(color = primaryColor, modifier = Modifier.size(14.dp), strokeWidth = 1.5.dp)
-                            }
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(60.dp)
-                                    .clip(RoundedCornerShape(6.dp))
-                            ) {
-                                val carouselSongs = newSongs.take(5)
-                                AnimatedContent(
-                                    targetState = carouselIndex,
-                                    transitionSpec = {
-                                        (fadeIn(tween(500)) + slideInHorizontally(tween(500)) { it })
-                                            .togetherWith(fadeOut(tween(500)) + slideOutHorizontally(tween(500)) { -it })
+                        item {
+                            if (isLoading || newSongs.isEmpty()) {
+                                Box(modifier = Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(color = primaryColor, modifier = Modifier.size(14.dp), strokeWidth = 1.5.dp)
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(60.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                ) {
+                                    val carouselSongs = newSongs.take(5)
+                                    AnimatedContent(
+                                        targetState = carouselIndex,
+                                        transitionSpec = {
+                                            (fadeIn(tween(500)) + slideInHorizontally(tween(500)) { it })
+                                                .togetherWith(fadeOut(tween(500)) + slideOutHorizontally(tween(500)) { -it })
+                                        }
+                                    ) { index ->
+                                        val song = carouselSongs.getOrNull(index)
+                                        if (song != null) {
+                                            CarouselItem(song) {
+                                                Thread {
+                                                    MediaPlayer.setPlaylist(newSongs, newSongs.indexOf(song))
+                                                    NeteaseCloudApi.playSong(song)
+                                                }.start()
+                                            }
+                                        }
                                     }
-                                ) { index ->
-                                    val song = carouselSongs.getOrNull(index)
-                                    if (song != null) {
-                                        CarouselItem(song) {
-                                            Thread {
-                                                MediaPlayer.setPlaylist(newSongs, newSongs.indexOf(song))
-                                                NeteaseCloudApi.playSong(song)
-                                            }.start()
+
+                                    Row(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomCenter)
+                                            .padding(bottom = 4.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        repeat(minOf(5, newSongs.size)) { i ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(if (i == carouselIndex) 8.dp else 4.dp, 4.dp)
+                                                    .clip(RoundedCornerShape(2.dp))
+                                                    .background(if (i == carouselIndex) primaryColor else Color.White.copy(0.5f))
+                                            )
                                         }
                                     }
                                 }
+                            }
+                        }
 
+                        item {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text("推荐歌单", fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+
+                        item {
+                            if (recommendPlaylists.isEmpty()) {
+                                Box(modifier = Modifier.fillMaxWidth().height(50.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(color = primaryColor, modifier = Modifier.size(14.dp), strokeWidth = 1.5.dp)
+                                }
+                            } else {
                                 Row(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .padding(bottom = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    repeat(minOf(5, newSongs.size)) { i ->
-                                        Box(
-                                            modifier = Modifier
-                                                .size(if (i == carouselIndex) 8.dp else 4.dp, 4.dp)
-                                                .clip(RoundedCornerShape(2.dp))
-                                                .background(if (i == carouselIndex) primaryColor else Color.White.copy(0.5f))
-                                        )
+                                    recommendPlaylists.forEach { pl ->
+                                        PlaylistItem(pl) {
+                                            currentPlaylist.value = pl
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    item {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text("推荐歌单", fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
+                        item {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text("新歌速递", fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
 
-                    item {
-                        if (recommendPlaylists.isEmpty()) {
-                            Box(modifier = Modifier.fillMaxWidth().height(50.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(color = primaryColor, modifier = Modifier.size(14.dp), strokeWidth = 1.5.dp)
-                            }
-                        } else {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                recommendPlaylists.forEach { pl ->
-                                    PlaylistItem(pl) {
-                                        currentPlaylist.value = pl
-                                    }
-                                }
-                            }
+                        items(newSongs.drop(5).take(6)) { song ->
+                            SongItem(song = song, onClick = {
+                                Thread {
+                                    MediaPlayer.setPlaylist(newSongs, newSongs.indexOf(song))
+                                    NeteaseCloudApi.playSong(song)
+                                }.start()
+                            })
                         }
                     }
-
-                    item {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text("新歌速递", fontSize = 8.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
-
-                    items(newSongs.drop(5).take(6)) { song ->
-                        SongItem(song = song, onClick = {
-                            Thread {
-                                MediaPlayer.setPlaylist(newSongs, newSongs.indexOf(song))
-                                NeteaseCloudApi.playSong(song)
-                            }.start()
-                        })
-                    }
+                    VerticalScrollbar(
+                        adapter = ScrollbarAdapter(homeListState),
+                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(end = 2.dp),
+                        style = ScrollbarStyle(
+                            minimalHeight = 16.dp,
+                            thickness = 4.dp,
+                            shape = RoundedCornerShape(2.dp),
+                            hoverDurationMillis = 300,
+                            unhoverColor = Color.White.copy(0.3f),
+                            hoverColor = primaryColor
+                        )
+                    )
                 }
             }
         }
@@ -574,6 +589,7 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
     fun PlaylistDetailPage(playlist: Playlist, onBack: () -> Unit) {
         var isLoading by remember { mutableStateOf(true) }
         val scope = rememberCoroutineScope()
+        val listState = rememberLazyListState()
 
         LaunchedEffect(playlist.id) {
             Thread {
@@ -601,7 +617,8 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
                         .clickable(onClick = onBack),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("←", color = Color.White, fontSize = 10.sp)
+                   Icon(SuperSoft.javaClass.getResourceAsStream("/assets/supersoft/ui/icon/left.png").readAllBytes().decodeToImageBitmap()
+                       ,contentDescription = null, tint = Color.White, modifier = Modifier.size(6.dp))
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -630,21 +647,36 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
                     CircularProgressIndicator(color = primaryColor, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 }
             } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    itemsIndexed(playlistSongs) { index, song ->
-                        SongItem(
-                            song = song,
-                            index = index + 1,
-                            onClick = {
-                                Thread {
-                                    MediaPlayer.setPlaylist(playlistSongs.toList(), index)
-                                    NeteaseCloudApi.playSong(song)
-                                }.start()
-                            }
-                        )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = listState,
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        itemsIndexed(playlistSongs) { index, song ->
+                            SongItem(
+                                song = song,
+                                index = index + 1,
+                                onClick = {
+                                    Thread {
+                                        MediaPlayer.setPlaylist(playlistSongs.toList(), index)
+                                        NeteaseCloudApi.playSong(song)
+                                    }.start()
+                                }
+                            )
+                        }
                     }
+                    VerticalScrollbar(
+                        adapter = ScrollbarAdapter(listState),
+                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                        style = ScrollbarStyle(
+                            minimalHeight = 16.dp,
+                            thickness = 4.dp,
+                            shape = RoundedCornerShape(2.dp),
+                            hoverDurationMillis = 300,
+                            unhoverColor = Color.White.copy(0.3f),
+                            hoverColor = primaryColor
+                        )
+                    )
                 }
             }
         }
@@ -662,6 +694,7 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
     fun SearchPage() {
         var songName by remember { mutableStateOf("") }
         val scope = rememberCoroutineScope()
+        val listState = rememberLazyListState()
 
         Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
             Row(
@@ -685,22 +718,37 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                itemsIndexed(songs) { index, song ->
-                    SongItem(
-                        song = song,
-                        index = index + 1,
-                        onClick = {
-                            Thread {
-                                MediaPlayer.setPlaylist(songs.toList(), index)
-                                NeteaseCloudApi.playSong(song)
-                            }.start()
-                        }
-                    )
+            Box(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    itemsIndexed(songs) { index, song ->
+                        SongItem(
+                            song = song,
+                            index = index + 1,
+                            onClick = {
+                                Thread {
+                                    MediaPlayer.setPlaylist(songs.toList(), index)
+                                    NeteaseCloudApi.playSong(song)
+                                }.start()
+                            }
+                        )
+                    }
                 }
+                VerticalScrollbar(
+                    adapter = ScrollbarAdapter(listState),
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    style = ScrollbarStyle(
+                        minimalHeight = 16.dp,
+                        thickness = 4.dp,
+                        shape = RoundedCornerShape(2.dp),
+                        hoverDurationMillis = 300,
+                        unhoverColor = Color.White.copy(0.3f),
+                        hoverColor = primaryColor
+                    )
+                )
             }
         }
     }
@@ -874,21 +922,54 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
     fun LikePage() {
         val isLoggedIn by localIsLoggedIn
         var isLoading by remember { mutableStateOf(false) }
-        val scope = rememberCoroutineScope()
+        var isLoadingMore by remember { mutableStateOf(false) }
+        var hasMore by remember { mutableStateOf(true) }
+        var likePlaylistId by remember { mutableStateOf<Long?>(null) }
+        val listState = rememberLazyListState()
 
         LaunchedEffect(isLoggedIn, likeSongsLoaded.value) {
             if (isLoggedIn && !likeSongsLoaded.value) {
                 isLoading = true
                 Thread {
                     try {
-                        val songs = NeteaseCloudApi.getLikeSongs()
-                        likeSongs.clear()
-                        likeSongs.addAll(songs)
+                        val playlistId = NeteaseCloudApi.getUserLikePlaylistId()
+                        likePlaylistId = playlistId
+                        if (playlistId != null) {
+                            val songs = NeteaseCloudApi.getPlaylistTracks(playlistId, 50, 0)
+                            likeSongs.clear()
+                            likeSongs.addAll(songs)
+                            hasMore = songs.size >= 50
+                        }
                         likeSongsLoaded.value = true
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
                     isLoading = false
+                }.start()
+            }
+        }
+
+        val shouldLoadMore by remember {
+            derivedStateOf {
+                val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                lastVisibleItem >= likeSongs.size - 5 && !isLoadingMore && hasMore && likeSongs.isNotEmpty()
+            }
+        }
+
+        LaunchedEffect(shouldLoadMore) {
+            if (shouldLoadMore && likePlaylistId != null) {
+                isLoadingMore = true
+                Thread {
+                    try {
+                        val newSongs = NeteaseCloudApi.getPlaylistTracks(likePlaylistId!!, 50, likeSongs.size)
+                        if (newSongs.isNotEmpty()) {
+                            likeSongs.addAll(newSongs)
+                        }
+                        hasMore = newSongs.size >= 50
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    isLoadingMore = false
                 }.start()
             }
         }
@@ -906,20 +987,42 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
                     CircularProgressIndicator(color = primaryColor, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 }
             } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    itemsIndexed(likeSongs) { index, song ->
-                        SongItem(
-                            song = song,
-                            onClick = {
-                                Thread {
-                                    MediaPlayer.setPlaylist(likeSongs.toList(), index)
-                                    NeteaseCloudApi.playSong(song)
-                                }.start()
+                Box(modifier = Modifier.fillMaxSize()) {
+                    LazyColumn(
+                        state = listState,
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        itemsIndexed(likeSongs) { index, song ->
+                            SongItem(
+                                song = song,
+                                onClick = {
+                                    Thread {
+                                        MediaPlayer.setPlaylist(likeSongs.toList(), index)
+                                        NeteaseCloudApi.playSong(song)
+                                    }.start()
+                                }
+                            )
+                        }
+                        if (isLoadingMore) {
+                            item {
+                                Box(modifier = Modifier.fillMaxWidth().padding(8.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(color = primaryColor, modifier = Modifier.size(14.dp), strokeWidth = 1.5.dp)
+                                }
                             }
-                        )
+                        }
                     }
+                    VerticalScrollbar(
+                        adapter = ScrollbarAdapter(listState),
+                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                        style = ScrollbarStyle(
+                            minimalHeight = 16.dp,
+                            thickness = 4.dp,
+                            shape = RoundedCornerShape(2.dp),
+                            hoverDurationMillis = 300,
+                            unhoverColor = Color.White.copy(0.3f),
+                            hoverColor = primaryColor
+                        )
+                    )
                 }
             }
         }
@@ -1407,12 +1510,19 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
     @OptIn(ExperimentalComposeUiApi::class)
     @Composable
     fun PlayerDetailPage(onClose: () -> Unit) {
-        val song by localCurrentSong
-        val isPlaying by localIsPlaying
-        val tick by localTick
-        val totalDuration by localTotalDuration
-        val lyric = remember { MediaPlayer.lyric }
-        val progress = if (totalDuration > 0) tick.toFloat() / totalDuration else 0f
+        val song by MediaPlayer.song
+        val isPlaying by MediaPlayer.isPlaying
+        val tick by MediaPlayer.tick
+        val totalDuration by MediaPlayer.totalDuration
+        val lyric = MediaPlayer.lyric
+
+
+        var isDragging by remember { mutableStateOf(false) }
+        var dragProgress by remember { mutableStateOf(0f) }
+
+
+        val progress = if (isDragging) dragProgress else if (totalDuration > 0) tick.toFloat() / totalDuration else 0f
+
         val currentLyricIndex = LyricLineProcessor.findCurrentIndex(lyric, tick.toLong())
         val listState = rememberLazyListState()
         val scope = rememberCoroutineScope()
@@ -1421,12 +1531,7 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
         LaunchedEffect(currentLyricIndex) {
             if (lyric.isNotEmpty() && currentLyricIndex >= 0 && lyricListHeight > 0) {
                 scope.launch {
-                    val itemHeight = 24
-                    val centerOffset = (lyricListHeight / 2) - (itemHeight / 2)
-                    listState.animateScrollToItem(
-                        index = currentLyricIndex,
-                        scrollOffset = -centerOffset
-                    )
+                    listState.animateScrollToItem(index = currentLyricIndex)
                 }
             }
         }
@@ -1461,9 +1566,7 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
                     )
             )
 
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
+            Column(modifier = Modifier.fillMaxSize()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1477,7 +1580,12 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
                             .clickable(onClick = onClose),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("×", color = Color.White, fontSize = 10.sp)
+                        Icon(
+                            SuperSoft.javaClass.getResourceAsStream("/assets/supersoft/ui/icon/disable.png").readAllBytes().decodeToImageBitmap(),
+                            tint = Color.White,
+                            contentDescription = null,
+                            modifier = Modifier.size(6.dp)
+                        )
                     }
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1584,11 +1692,12 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
                         .padding(horizontal = 12.dp)
                         .padding(bottom = 8.dp)
                 ) {
-                    var isDragging by remember { mutableStateOf(false) }
-                    var dragProgress by remember { mutableStateOf(0f) }
                     var sliderWidth by remember { mutableStateOf(0f) }
                     val localDensity = LocalDensity.current
+
                     val displayProgress = if (isDragging) dragProgress else progress
+                    val animatedProgress by animateFloatAsState(displayProgress, tween(100))
+                    val thumbSizePx = with(localDensity) { 10.dp.toPx() }
 
                     Box(
                         modifier = Modifier
@@ -1642,23 +1751,25 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
-                                    .fillMaxWidth(displayProgress)
+                                    .fillMaxWidth(animatedProgress.coerceIn(0f, 1f))
                                     .background(primaryColor)
                             )
                         }
 
-                        val thumbOffset = with(localDensity) {
-                            ((sliderWidth - 10.dp.toPx()) * displayProgress).toDp()
+                        if (sliderWidth > 0) {
+                            val thumbOffset = with(localDensity) {
+                                ((sliderWidth - thumbSizePx) * animatedProgress.coerceIn(0f, 1f)).toDp()
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.CenterStart)
+                                    .offset(x = thumbOffset)
+                                    .size(10.dp)
+                                    .shadow(2.dp, CircleShape)
+                                    .clip(CircleShape)
+                                    .background(Color.White)
+                            )
                         }
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .offset(x = thumbOffset)
-                                .size(10.dp)
-                                .shadow(2.dp, CircleShape)
-                                .clip(CircleShape)
-                                .background(Color.White)
-                        )
                     }
 
                     Row(
@@ -1787,7 +1898,8 @@ class MusicPlayerScreen(var parentScreen: Screen? = null) : ComposeScreen(Text.o
             val id = obj["id"]?.jsonPrimitive?.content ?: "0"
             val singer = obj["ar"]?.jsonArray?.firstOrNull()?.jsonObject?.get("name")?.jsonPrimitive?.content ?: ""
             val image = obj["al"]?.jsonObject?.get("picUrl")?.jsonPrimitive?.content ?: ""
-            songs.add(Song(name = name, image = "$image?param=200y200", singer = singer, id = id.toLong()))
+            val duration = obj["dt"]?.jsonPrimitive?.content?.toLongOrNull() ?: 0L
+            songs.add(Song(name = name, image = "$image?param=200y200", singer = singer, id = id.toLong(), duration = duration))
         }
     }
 }

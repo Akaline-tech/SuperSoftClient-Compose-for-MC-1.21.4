@@ -73,14 +73,8 @@ object DynamicIsland : ComposeModule("DynamicIsland","灵动岛") {
                         Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                             Text(defaultTitle.value.replace("{fps}",fps.toString()), color = Color.White, fontSize = 6.sp)
                             permanentList.onEachIndexed { index, pair ->
-                                if (index != permanentList.count()-1) {
-                                    Text(" ・ ", color = Color.White, fontSize = 6.sp)
-                                    pair.value.invoke()
-                                    Text(" ・ ", color = Color.White, fontSize = 6.sp)
-                                } else {
-                                    Text(" ・ ", color = Color.White, fontSize = 6.sp)
-                                    pair.value.invoke()
-                                }
+                                Text(" ・ ", color = Color.White, fontSize = 6.sp)
+                                pair.value.invoke()
                             }
                         }
                     }
