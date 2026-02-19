@@ -85,7 +85,7 @@ object NameTags : ComposeModule("NameTags", "NameTags") {
         val camera = mc.gameRenderer.camera
         val window = mc.window
 
-        val camPos = camera.pos
+        val camPos = camera.getPos()
         val delta = Vector3f(
             (worldPos.x - camPos.x).toFloat(),
             (worldPos.y - camPos.y).toFloat(),

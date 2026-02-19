@@ -172,7 +172,7 @@ object KillAura : Module("KillAura", "自动攻击附近的实体", Category.Com
             lastTargetPos = null
         }
         currentTarget = target
-        lastTargetPos = target.pos
+        lastTargetPos = target.getPos()
 
 
         val rotation = RotationManager.calculateRotation(
