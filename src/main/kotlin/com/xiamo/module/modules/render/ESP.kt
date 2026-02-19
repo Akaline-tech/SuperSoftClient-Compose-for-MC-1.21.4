@@ -35,9 +35,9 @@ object ESP : Module("ESP", "透视", Category.Render) {
         }
         if (!shouldRender) return
 
-        val cameraX = mc.gameRenderer.camera.pos.x
-        val cameraY = mc.gameRenderer.camera.pos.y
-        val cameraZ = mc.gameRenderer.camera.pos.z
+        val cameraX = mc.gameRenderer.camera.getPos().x
+        val cameraY = mc.gameRenderer.camera.getPos().y
+        val cameraZ = mc.gameRenderer.camera.getPos().z
 
         val entityX = MathHelper.lerp(tickDelta.toDouble(), entity.lastRenderX, entity.x)
         val entityY = MathHelper.lerp(tickDelta.toDouble(), entity.lastRenderY, entity.y)

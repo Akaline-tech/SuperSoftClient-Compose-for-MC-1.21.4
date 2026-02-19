@@ -55,7 +55,7 @@ object NameTags : ComposeModule("NameTags", "NameTags") {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 frameNanos //强行重新绘制，不然这个bCompose不会每帧绘制
-                val tickDelta = mc.renderTickCounter.getTickDelta(true)
+                val tickDelta = 1.0f
                 val world = mc.world ?: return@Canvas
                 val player = mc.player ?: return@Canvas
                 world.entities
@@ -85,7 +85,7 @@ object NameTags : ComposeModule("NameTags", "NameTags") {
         val camera = mc.gameRenderer.camera
         val window = mc.window
 
-        val camPos = camera.pos
+        val camPos = camera.getPos()
         val delta = Vector3f(
             (worldPos.x - camPos.x).toFloat(),
             (worldPos.y - camPos.y).toFloat(),
@@ -126,9 +126,9 @@ object NameTags : ComposeModule("NameTags", "NameTags") {
                 )
             )
             val entityPos = Vec3d(
-                entity.prevX + (entity.x - entity.prevX) * tickDelta,
-                entity.prevY + (entity.y - entity.prevY) * tickDelta + entity.height + 0.65,
-                entity.prevZ + (entity.z - entity.prevZ) * tickDelta
+                entity.lastX + (entity.x - entity.lastX) * tickDelta,
+                entity.lastY + (entity.y - entity.lastY) * tickDelta + entity.height + 0.65,
+                entity.lastZ + (entity.z - entity.lastZ) * tickDelta
             )
             val screenPos = worldToScreen(entityPos, tickDelta) ?: return
             val text = entity.name.string
