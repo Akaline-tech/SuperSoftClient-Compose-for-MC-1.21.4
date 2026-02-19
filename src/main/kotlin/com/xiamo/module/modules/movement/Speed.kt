@@ -105,8 +105,8 @@ object Speed : Module("Speed", "增加移动速度", Category.Movement) {
         }
 
         lastDistance = sqrt(
-            (player.x - player.prevX) * (player.x - player.prevX) +
-            (player.z - player.prevZ) * (player.z - player.prevZ)
+            (player.x - player.lastX) * (player.x - player.lastX) +
+            (player.z - player.lastZ) * (player.z - player.lastZ)
         )
 
         if (player.isOnGround) {
@@ -415,8 +415,8 @@ object Speed : Module("Speed", "增加移动速度", Category.Movement) {
         val player = mc.player ?: return 0f
 
         var yaw = player.yaw
-        val forward = player.input.movementForward
-        val strafe = player.input.movementSideways
+        val forward = player.input.forwardMovement
+        val strafe = player.input.sidewaysMovement
 
         if (forward != 0f) {
             if (strafe > 0) {
@@ -438,7 +438,7 @@ object Speed : Module("Speed", "增加移动速度", Category.Movement) {
     private fun isMoving(): Boolean {
         val mc = MinecraftClient.getInstance()
         val player = mc.player ?: return false
-        return player.input.movementForward != 0f || player.input.movementSideways != 0f
+        return player.input.forwardMovement != 0f || player.input.sidewaysMovement != 0f
     }
 
     private fun getRandomOffset(): Double {

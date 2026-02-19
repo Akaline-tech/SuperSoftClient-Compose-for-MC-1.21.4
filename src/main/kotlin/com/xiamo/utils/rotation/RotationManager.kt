@@ -189,14 +189,14 @@ object RotationManager {
 
         savedClientYaw = player.yaw
         savedClientPitch = player.pitch
-        savedPrevYaw = player.prevYaw
-        savedPrevPitch = player.prevPitch
+        savedPrevYaw = player.lastYaw
+        savedPrevPitch = player.lastPitch
 
 
         player.yaw = serverYaw
         player.pitch = serverPitch
-        player.prevYaw = prevServerYaw
-        player.prevPitch = prevServerPitch
+        player.lastYaw = prevServerYaw
+        player.lastPitch = prevServerPitch
 
         rotationApplied = true
         return true
@@ -211,8 +211,8 @@ object RotationManager {
         // 恢复客户端旋转
         player.yaw = savedClientYaw
         player.pitch = savedClientPitch
-        player.prevYaw = savedPrevYaw
-        player.prevPitch = savedPrevPitch
+        player.lastYaw = savedPrevYaw
+        player.lastPitch = savedPrevPitch
 
         rotationApplied = false
     }

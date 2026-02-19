@@ -3,7 +3,8 @@ package com.xiamo.alt
 import com.google.gson.JsonObject
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.session.Session
-import java.util.*
+import java.util.Optional
+import java.util.UUID
 
 /**
  * 账号类型枚举
@@ -40,12 +41,7 @@ data class MinecraftAccount(
             UUID.fromString(uuid),
             accessToken,
             Optional.empty(),
-            Optional.empty(),
-            when (type) {
-                AccountType.CRACKED -> Session.AccountType.LEGACY
-                AccountType.MICROSOFT -> Session.AccountType.MSA
-                AccountType.SESSION -> Session.AccountType.MOJANG
-            }
+            Optional.empty()
         )
     }
 
@@ -120,11 +116,7 @@ data class MinecraftAccount(
             return MinecraftAccount(
                 username = session.username,
                 uuid = session.uuidOrNull?.toString() ?: UUID.randomUUID().toString(),
-                type = when (session.accountType) {
-                    Session.AccountType.MSA -> AccountType.MICROSOFT
-                    Session.AccountType.MOJANG -> AccountType.SESSION
-                    else -> AccountType.CRACKED
-                },
+                type = if (session.accessToken.isBlank()) AccountType.CRACKED else AccountType.MICROSOFT,
                 accessToken = session.accessToken
             )
         }

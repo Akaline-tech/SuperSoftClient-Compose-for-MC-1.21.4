@@ -38,7 +38,6 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.client.gui.screen.ingame.InventoryScreen
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.item.ItemStack
-import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket
 import net.minecraft.network.packet.s2c.play.OpenScreenS2CPacket
 import net.minecraft.screen.ScreenHandlerType
 import net.minecraft.screen.slot.Slot
@@ -144,12 +143,14 @@ object ChestStealer : Module("ChestStealer","", Category.Player) {
             }
         }
 
-        val networkHandler = MinecraftClient.getInstance().player!!.networkHandler
+        val player = MinecraftClient.getInstance().player ?: return
         isDynamicIsland.itemOutAnimate(screenHandler.screenHandler.getSlot(slotId))
-        networkHandler.sendPacket(
-            ClickSlotC2SPacket(
-                screenId,screenHandler.screenHandler.revision,slotId,button,action, screenHandler.screenHandler.getSlot(slotId).stack,int2ObjectMap
-            )
+        MinecraftClient.getInstance().interactionManager?.clickSlot(
+            screenId,
+            slotId,
+            button,
+            action,
+            player
         )
 
 

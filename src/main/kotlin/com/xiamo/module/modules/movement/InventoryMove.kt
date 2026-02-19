@@ -19,7 +19,7 @@ object InventoryMove : Module("Inventory Move","Inventory Move", Category.Moveme
         val keys = listOf(options.forwardKey, options.backKey, options.leftKey, options.rightKey, options.jumpKey,options.sneakKey)
         for (key in keys) {
             val code = key.defaultKey.code
-            if (net.minecraft.client.util.InputUtil.isKeyPressed(mc.window.handle, code)) {
+            if (net.minecraft.client.util.InputUtil.isKeyPressed(mc.window, code)) {
                 key.isPressed = true
             }
         }
