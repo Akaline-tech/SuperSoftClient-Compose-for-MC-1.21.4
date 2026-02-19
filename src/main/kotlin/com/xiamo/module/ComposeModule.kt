@@ -122,11 +122,11 @@ open class ComposeModule(name : String, description : String) : Module(name,desc
         GlStateUtil.save()
         glStorePixel()
         skiaContext?.resetAll()
-        com.mojang.blaze3d.platform.GlStateManager._enableBlend()
+        
         surface?.let { composeScene?.render(it.canvas.asComposeCanvas(), System.nanoTime()) }
         surface?.flush()
         GlStateUtil.restore()
-        com.mojang.blaze3d.platform.GlStateManager._disableBlend()
+        
 
 
     }

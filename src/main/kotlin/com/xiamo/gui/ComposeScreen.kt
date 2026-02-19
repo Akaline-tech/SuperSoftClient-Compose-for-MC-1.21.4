@@ -137,11 +137,11 @@ open class ComposeScreen(val text: Text) : Screen(text) {
         glStorePixel()
         skiaContext?.resetAll()
 
-        com.mojang.blaze3d.platform.GlStateManager._enableBlend()
+        
         surface?.let { composeScene?.render(it.canvas.asComposeCanvas(), System.nanoTime()) }
         surface?.flush()
         GlStateUtil.restore()
-        com.mojang.blaze3d.platform.GlStateManager._disableBlend()
+        
     }
 
 
@@ -188,7 +188,7 @@ open class ComposeScreen(val text: Text) : Screen(text) {
     }
 
     @OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
-    fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+    open override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         currentScale = MinecraftClient.getInstance().window.scaleFactor
         val event = AWTUtils.MouseEvent(
             (mouseX * currentScale).toInt(),
@@ -209,7 +209,7 @@ open class ComposeScreen(val text: Text) : Screen(text) {
     }
 
     @OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
-    fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
+    open override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
         val event = AWTUtils.MouseEvent(
             (mouseX * currentScale).toInt(),
             (mouseY * currentScale).toInt(),
@@ -237,7 +237,7 @@ open class ComposeScreen(val text: Text) : Screen(text) {
     }
 
     @OptIn(InternalComposeUiApi::class, ExperimentalComposeUiApi::class)
-    fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
+    open override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
         val event = AWTUtils.MouseEvent(
             (mouseX * currentScale).toInt(),
             (mouseY * currentScale).toInt(),
@@ -263,7 +263,7 @@ open class ComposeScreen(val text: Text) : Screen(text) {
     }
 
     @OptIn(InternalComposeUiApi::class)
-    fun charTyped(chr: Char, modifiers: Int): Boolean {
+    open override fun charTyped(chr: Char, modifiers: Int): Boolean {
         val time = System.nanoTime() / 1_000_000
         composeScene?.sendKeyEvent(
             AWTUtils.KeyEvent(
@@ -280,7 +280,7 @@ open class ComposeScreen(val text: Text) : Screen(text) {
 
 
     @OptIn(InternalComposeUiApi::class)
-    fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+    open override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
         if (keyCode == GLFW.GLFW_KEY_ESCAPE){
             isVisible = false
             ModuleManager.modules.filter { it.isComposeScreen }.forEach{
@@ -304,7 +304,7 @@ open class ComposeScreen(val text: Text) : Screen(text) {
     }
 
     @OptIn(InternalComposeUiApi::class)
-    fun keyReleased(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+    open override fun keyReleased(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
         val awtKey = glfwToAwtKeyCode(keyCode)
         val time = System.nanoTime() / 1_000_000
         composeScene?.sendKeyEvent(
