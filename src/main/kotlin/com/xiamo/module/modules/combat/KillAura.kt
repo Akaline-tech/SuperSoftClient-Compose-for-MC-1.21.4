@@ -213,9 +213,9 @@ object KillAura : Module("KillAura", "自动攻击附近的实体", Category.Com
 
 
         val velocity = Vec3d(
-            target.x - target.prevX,
-            target.y - target.prevY,
-            target.z - target.prevZ
+            target.x - target.lastX,
+            target.y - target.lastY,
+            target.z - target.lastZ
         )
 
 

@@ -91,7 +91,7 @@ open class ComposeModule(name : String, description : String) : Module(name,desc
         closeSkiaResources()
 
         skiaContext = DirectContext.makeGL()
-        renderTarget = BackendRenderTarget.makeGL(frameWidth,frameHeight,0,8,mc.framebuffer.fbo,
+        renderTarget = BackendRenderTarget.makeGL(frameWidth,frameHeight,0,8,GL33C.glGetInteger(GL33C.GL_FRAMEBUFFER_BINDING),
             FramebufferFormat.GR_GL_RGBA8)
 
 
@@ -122,11 +122,11 @@ open class ComposeModule(name : String, description : String) : Module(name,desc
         GlStateUtil.save()
         glStorePixel()
         skiaContext?.resetAll()
-        RenderSystem.enableBlend()
+        
         surface?.let { composeScene?.render(it.canvas.asComposeCanvas(), System.nanoTime()) }
         surface?.flush()
         GlStateUtil.restore()
-        RenderSystem.disableBlend()
+        
 
 
     }

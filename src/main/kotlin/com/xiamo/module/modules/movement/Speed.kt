@@ -105,8 +105,8 @@ object Speed : Module("Speed", "增加移动速度", Category.Movement) {
         }
 
         lastDistance = sqrt(
-            (player.x - player.prevX) * (player.x - player.prevX) +
-            (player.z - player.prevZ) * (player.z - player.prevZ)
+            (player.x - player.lastX) * (player.x - player.lastX) +
+            (player.z - player.lastZ) * (player.z - player.lastZ)
         )
 
         if (player.isOnGround) {
