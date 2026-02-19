@@ -8,8 +8,8 @@
 		"XiaMo"
 	],
 	"contact": {
-		"homepage": "https://github.com/Xiamo-vip/SuperSoftClient-Compose-for-MC-1.21.4",
-		"sources": "https://github.com/Xiamo-vip/SuperSoftClient-Compose-for-MC-1.21.4"
+		"homepage": "https://github.com/Xiamo-vip/SuperSoftClient-Compose-for-MC-1.21.11",
+		"sources": "https://github.com/Xiamo-vip/SuperSoftClient-Compose-for-MC-1.21.11"
 	},
 	"license": "GPL-3.0",
 	"icon": "assets/supersoft/icon.png",
@@ -27,7 +27,7 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.18.1",
-		"minecraft": "~1.21.4",
+		"minecraft": "~1.21.11",
 		"java": ">=21",
 		"fabric-api": "*",
 		"fabric-language-kotlin": "*"
